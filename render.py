@@ -199,7 +199,7 @@ class CircleRenderer(Renderer):
 
     def _create_vertex_list(self):
         self._vertex_list = Renderer.BATCH.add(
-            50, GL_TRIANGLE_FAN, self._group,
+            self.point_count, GL_TRIANGLE_FAN, self._group,
             "v2f", "c3B"
         )
 

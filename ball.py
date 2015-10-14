@@ -2,7 +2,7 @@
 
 from render import BallRenderer
 
-__author__ = 'Zander Otavka'
+__author__ = "Zander Otavka"
 
 
 class Ball(object):

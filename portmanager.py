@@ -1,28 +1,22 @@
 """Interface between the XBee and the algorithm."""
 
-# import stuff
+from serial import Serial
+from xbee import XBee
 
 __author__ = "Zander Otavka"
 
 
 class PortManager(object):
 
-    _device = None
-    _port = None
+    _serial = None
+    _xbee = None
     _on_get_data = None
     _old_data = None
 
     def __init__(self, device, port):
-        self._device = device
-        self._port = port
-
-    @property
-    def device(self):
-        return self._device
-
-    @property
-    def port(self):
-        return self._port
+        # ser = Serial(device, port)
+        self._serial = Serial()
+        self._xbee = XBee(self._serial)
 
     def _get_data(self):
         data = [
@@ -46,14 +40,12 @@ class PortManager(object):
         if data == self._old_data:
             return None
         else:
-            print "load data from device: {} on port: {}".format(self.device,
-                                                                 self.port)
+            print "load data from xbee: {}".format(self._xbee)
             self._old_data = data
             return data
 
     def send_shot_data(self, shot):
-        print "send data to device: {} on port: {}".format(self.device,
-                                                           self.port)
+        print "send data to xbee: {}".format(self._xbee)
         print shot.serialize()
 
     def event(self, func):
@@ -67,3 +59,6 @@ class PortManager(object):
         data = self._get_data()
         if data is not None:
             self._on_get_data(data)
+
+    def close(self):
+        self._serial.close()

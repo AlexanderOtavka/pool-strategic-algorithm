@@ -10,7 +10,7 @@ import json
 
 from pyglet.window import Window
 from pyglet.clock import schedule_interval
-from pyglet.app import run
+from pyglet.app import run, event_loop
 from pyglet.gl import glClearColor
 
 from portmanager import PortManager
@@ -43,6 +43,11 @@ def on_get_data(data):
     balls = BallGroup.from_data(data)
     print balls
     port_manager.send_shot_data(Shot(angle=0, elevation=0, force=10))
+
+
+@event_loop.event
+def on_exit():
+    port_manager.close()
 
 
 schedule_interval(lambda dt: port_manager.listen(), 1/60)

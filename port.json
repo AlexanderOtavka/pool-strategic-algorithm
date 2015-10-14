@@ -1,4 +1,4 @@
 {
-  "device": "/dev/foo",
-  "port": 9000
+  "device": "/dev/ttyUSB0",
+  "port": 9600
 }
