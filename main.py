@@ -29,6 +29,7 @@ balls = None
 
 glClearColor(0.2, 0.6, 0.3, 1)
 
+
 @window.event
 def on_draw():
     window.clear()
