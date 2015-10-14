@@ -69,4 +69,4 @@ class BallGroup(list):
                     ball.y = y
                 else:
                     ball.delete()
-                    self.remove(ball)
+                    self[i] = None

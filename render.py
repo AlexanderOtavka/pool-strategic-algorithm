@@ -2,7 +2,7 @@
 
 from __future__ import division
 
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta, abstractmethod, abstractproperty
 from math import pi, sin, cos, ceil
 
 from pyglet.graphics import Batch, Group, OrderedGroup
@@ -94,12 +94,77 @@ class LineRenderer(PrimitiveRenderer):
         super(LineRenderer, self).delete()
 
 
-class CircleArc(object):
+class CirclePointGroup(object):
+    __metaclass__ = ABCMeta
+
+    _circle_renderer = None
+
+    def __init__(self, circle_renderer=None):
+        self._circle_renderer = circle_renderer
+
+    @property
+    def circle_renderer(self):
+        return self._circle_renderer
+
+    @circle_renderer.setter
+    def circle_renderer(self, new):
+        self._circle_renderer = new
+
+    @abstractproperty
+    def point_count(self):
+        pass
+
+    @abstractproperty
+    def points(self):
+        pass
+
+    def delete(self):
+        self.circle_renderer = None
+
+
+class CirclePoint(CirclePointGroup):
+
+    _x = None
+    _y = None
+
+    def __init__(self, x, y, circle_renderer=None):
+        super(CirclePoint, self).__init__(circle_renderer)
+        self._x = x
+        self._y = y
+
+    @property
+    def x(self):
+        return self._x
+
+    @x.setter
+    def x(self, new):
+        self._x = new
+
+    @property
+    def y(self):
+        return self._y
+
+    @y.setter
+    def y(self, new):
+        self._y = new
+
+    @property
+    def point_count(self):
+        return 1
+
+    @property
+    def points(self):
+        return [(self.x + self.circle_renderer.x,
+                 self.y + self.circle_renderer.y)]
+
+
+class CircleArc(CirclePointGroup):
 
     _start_angle = None
     _end_angle = None
 
-    def __init__(self, start_angle, end_angle):
+    def __init__(self, start_angle, end_angle, circle_renderer=None):
+        super(CircleArc, self).__init__(circle_renderer)
         self._start_angle = simplify_radians(start_angle)
         self._end_angle = simplify_radians(end_angle)
 
@@ -119,17 +184,20 @@ class CircleArc(object):
     def end_angle(self, new):
         self._end_angle = simplify_radians(new)
 
-    def get_point_count(self, resolution):
+    @property
+    def point_count(self):
         return int(abs(ceil((self.end_angle - self.start_angle) / (2 * pi) *
-                            resolution)))
+                            self.circle_renderer.resolution)))
 
-    def get_points(self, radius, number, x_offset=0, y_offset=0):
-        for i in range(number):
+    @property
+    def points(self):
+        for i in range(self.point_count):
             angle = (i * ((self.end_angle - self.start_angle) % (2 * pi)) /
-                     (number - 1) +
-                     self.start_angle)
-            x = cos(angle) * radius + x_offset
-            y = sin(angle) * radius + y_offset
+                     (self.point_count - 1) + self.start_angle)
+            x = (cos(angle) * self.circle_renderer.radius +
+                 self.circle_renderer.x)
+            y = (sin(angle) * self.circle_renderer.radius +
+                 self.circle_renderer.y)
             yield (x, y)
 
 
@@ -149,6 +217,8 @@ class CircleRenderer(PrimitiveRenderer):
         self._x = x
         self._y = y
         self._radius = radius
+        for point in circle_points:
+            point.circle_renderer = self
         self._circle_points = circle_points
         if resolution is not None:
             self._resolution = resolution
@@ -163,9 +233,15 @@ class CircleRenderer(PrimitiveRenderer):
 
     @classmethod
     def new_sector(cls, color, x, y, radius, start_angle, end_angle,
-                   group=None):
-        circle_points = [(0, 0), CircleArc(start_angle, end_angle)]
-        return cls(color, x, y, radius, circle_points, group)
+                   resolution=None, group=None):
+        circle_points = [CirclePoint(0, 0), CircleArc(start_angle, end_angle)]
+        return cls(color, x, y, radius, circle_points, resolution, group)
+
+    @classmethod
+    def new_segment(cls, color, x, y, radius, start_angle, end_angle,
+                    resolution=None, group=None):
+        circle_points = [CircleArc(start_angle, end_angle)]
+        return cls(color, x, y, radius, circle_points, resolution, group)
 
     @property
     def x(self):
@@ -211,10 +287,7 @@ class CircleRenderer(PrimitiveRenderer):
     def point_count(self):
         count = 0
         for point in self._circle_points:
-            if isinstance(point, CircleArc):
-                count += point.get_point_count(self.resolution)
-            else:
-                count += 1
+            count += point.point_count
         return count
 
     def _create_vertex_list(self):
@@ -227,13 +300,7 @@ class CircleRenderer(PrimitiveRenderer):
 
         points = []
         for circle_point in self.circle_points:
-            if isinstance(circle_point, CircleArc):
-                points.extend(list(circle_point.get_points(
-                    self.radius, circle_point.get_point_count(self.resolution),
-                    self.x, self.y)))
-            else:
-                points.append((circle_point[0] + self.x,
-                               circle_point[1] + self.y))
+            points.extend(list(circle_point.points))
 
         assert self.point_count == len(points)
         self._vertex_list.vertices[:] = [number for point in points
@@ -243,6 +310,8 @@ class CircleRenderer(PrimitiveRenderer):
 
     def delete(self):
         super(CircleRenderer, self).delete()
+        for point in self.circle_points:
+            point.delete()
 
 
 class BallRenderer(Renderer):
@@ -286,11 +355,11 @@ class BallRenderer(Renderer):
             BallRenderer.COLORS[number], x, y, radius,
             BallRenderer._CIRCLE_RESOLUTION, BallRenderer._CIRCLE_GROUP)
         if number > 8:
-            self._top_stripe = CircleRenderer(
-                (255, 255, 255), x, y, radius, [CircleArc(pi / 4, 3*pi / 4)],
+            self._top_stripe = CircleRenderer.new_segment(
+                (255, 255, 255), x, y, radius, pi / 4, 3 * pi / 4,
                 BallRenderer._CIRCLE_RESOLUTION, BallRenderer._STRIPE_GROUP)
-            self._bottom_stripe = CircleRenderer(
-                (255, 255, 255), x, y, radius, [CircleArc(-3*pi / 4, -pi / 4)],
+            self._bottom_stripe = CircleRenderer.new_segment(
+                (255, 255, 255), x, y, radius, -3 * pi / 4, -pi / 4,
                 BallRenderer._CIRCLE_RESOLUTION, BallRenderer._STRIPE_GROUP)
         if number > 0:
             self._number_bg = CircleRenderer.new_circle(
