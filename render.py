@@ -1,4 +1,4 @@
-"""Contains Renderer classes."""
+"""Abstracts away rendering using subclasses of `Renderer`."""
 
 from __future__ import division
 
