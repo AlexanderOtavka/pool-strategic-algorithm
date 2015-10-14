@@ -1,7 +1,8 @@
+#!/usr/bin/env python
 """
 Find the best shot on the pool table.
 
-Pool table is 54 x 108 inches.
+Pool table is 54 x 108 inches.  Each pixel is .1 inches.
 """
 
 from __future__ import division
