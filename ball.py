@@ -52,10 +52,21 @@ class Ball(object):
 
 class BallGroup(list):
 
-    def __init__(self, balls):
-        super(BallGroup, self).__init__(balls)
+    def __init__(self):
+        super(BallGroup, self).__init__()
 
-    @classmethod
-    def from_data(cls, data):
-        return cls(Ball(i // 2, data[i], data[i + 1])
-                   for i in range(0, len(data), 2))
+    def update(self, data):
+        point_list = [(data[i], data[i + 1]) for i in range(0, len(data), 2)]
+        if len(point_list) != len(self):
+            self[:] = [Ball(index, point[0], point[1])
+                       if point[0] and point[1] else None
+                       for index, point in enumerate(point_list)]
+        else:
+            for i, ball in enumerate(self):
+                x, y = point_list[i]
+                if x and y:
+                    ball.x = x
+                    ball.y = y
+                else:
+                    ball.delete()
+                    self.remove(ball)

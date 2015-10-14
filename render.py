@@ -6,7 +6,7 @@ from abc import ABCMeta, abstractmethod
 from math import pi, sin, cos, ceil
 
 from pyglet.graphics import Batch, Group, OrderedGroup
-from pyglet.gl import GL_POINTS, GL_TRIANGLE_FAN
+from pyglet.gl import GL_LINES, GL_TRIANGLE_FAN
 from pyglet.text import Label
 
 from angle import simplify_radians
@@ -14,10 +14,19 @@ from angle import simplify_radians
 __author__ = "Zander Otavka"
 
 
+batch = Batch()
+
+
 class Renderer(object):
     __metaclass__ = ABCMeta
 
-    BATCH = Batch()
+    @abstractmethod
+    def delete(self):
+        pass
+
+
+class PrimitiveRenderer(Renderer):
+    __metaclass__ = ABCMeta
 
     _renderers = []
 
@@ -26,13 +35,13 @@ class Renderer(object):
     _color = None
 
     def __init__(self, color, group=None):
-        Renderer._renderers.append(self)
+        PrimitiveRenderer._renderers.append(self)
         self._group = Group(parent=group)
         self._color = color
 
     @staticmethod
     def update_all_vertex_lists():
-        for renderer in Renderer._renderers:
+        for renderer in PrimitiveRenderer._renderers:
             renderer.update_vertex_list()
 
     @property
@@ -52,7 +61,7 @@ class Renderer(object):
         pass
 
 
-class LineRenderer(Renderer):
+class LineRenderer(PrimitiveRenderer):
 
     _points = None
 
@@ -70,10 +79,8 @@ class LineRenderer(Renderer):
         self.points = new
 
     def _create_vertex_list(self):
-        self._vertex_list = Renderer.BATCH.add(
-            len(self.points), GL_POINTS, self._group,
-            "v2f", "c3B"
-        )
+        self._vertex_list = batch.add(len(self.points), GL_LINES, self._group,
+                                      "v2f", "c3B")
 
     def update_vertex_list(self):
         if self._vertex_list.get_size() != len(self.points):
@@ -82,6 +89,9 @@ class LineRenderer(Renderer):
         self._vertex_list.vertices[:] = [number for point in self.points
                                          for number in point]
         self._vertex_list.colors[:] = self.color * len(self.points)
+
+    def delete(self):
+        super(LineRenderer, self).delete()
 
 
 class CircleArc(object):
@@ -123,36 +133,38 @@ class CircleArc(object):
             yield (x, y)
 
 
-class CircleRenderer(Renderer):
+class CircleRenderer(PrimitiveRenderer):
 
-    CIRCLE_RESOLUTION = 50
+    DEFAULT_RESOLUTION = 50
 
     _x = None
     _y = None
     _radius = None
     _circle_points = None
+    _resolution = None
 
-    def __init__(self, color, x, y, radius, circle_points, group=None):
+    def __init__(self, color, x, y, radius, circle_points, resolution=None,
+                 group=None):
         super(CircleRenderer, self).__init__(color, group)
         self._x = x
         self._y = y
         self._radius = radius
         self._circle_points = circle_points
+        if resolution is not None:
+            self._resolution = resolution
+        else:
+            self._resolution = CircleRenderer.DEFAULT_RESOLUTION
         self._create_vertex_list()
 
     @classmethod
-    def new_circle(cls, color, x, y, radius, group=None):
+    def new_circle(cls, color, x, y, radius, resolution=None, group=None):
         circle_points = [CircleArc(0, 1.99 * pi)]
-        return cls(color, x, y, radius, circle_points, group)
+        return cls(color, x, y, radius, circle_points, resolution, group)
 
     @classmethod
     def new_sector(cls, color, x, y, radius, start_angle, end_angle,
                    group=None):
-        circle_points = [
-            (0, 0),
-            CircleArc(start_angle, end_angle),
-            (0, 0)
-        ]
+        circle_points = [(0, 0), CircleArc(start_angle, end_angle)]
         return cls(color, x, y, radius, circle_points, group)
 
     @property
@@ -188,20 +200,26 @@ class CircleRenderer(Renderer):
         self._circle_points = new
 
     @property
+    def resolution(self):
+        return self._resolution
+
+    @resolution.setter
+    def resolution(self, new):
+        self._resolution = new
+
+    @property
     def point_count(self):
         count = 0
         for point in self._circle_points:
             if isinstance(point, CircleArc):
-                count += point.get_point_count(CircleRenderer.CIRCLE_RESOLUTION)
+                count += point.get_point_count(self.resolution)
             else:
                 count += 1
         return count
 
     def _create_vertex_list(self):
-        self._vertex_list = Renderer.BATCH.add(
-            self.point_count, GL_TRIANGLE_FAN, self._group,
-            "v2f", "c3B"
-        )
+        self._vertex_list = batch.add(self.point_count, GL_TRIANGLE_FAN,
+                                      self._group, "v2f", "c3B")
 
     def update_vertex_list(self):
         if self._vertex_list.get_size() != self.point_count:
@@ -210,11 +228,9 @@ class CircleRenderer(Renderer):
         points = []
         for circle_point in self.circle_points:
             if isinstance(circle_point, CircleArc):
-                arc_points = list(circle_point.get_points(
-                    self.radius, circle_point.get_point_count(
-                        CircleRenderer.CIRCLE_RESOLUTION),
-                    x_offset=self.x, y_offset=self.y))
-                points.extend(arc_points)
+                points.extend(list(circle_point.get_points(
+                    self.radius, circle_point.get_point_count(self.resolution),
+                    self.x, self.y)))
             else:
                 points.append((circle_point[0] + self.x,
                                circle_point[1] + self.y))
@@ -225,14 +241,17 @@ class CircleRenderer(Renderer):
 
         self._vertex_list.colors[:] = self.color * self.point_count
 
+    def delete(self):
+        super(CircleRenderer, self).delete()
 
-class BallRenderer(object):
+
+class BallRenderer(Renderer):
 
     COLORS = [
         (255, 255, 255),  # cue- white
         (230, 200, 100),  # 1  - yellow
         (100, 100, 200),  # 2  - blue
-        (240,  80,  60),  # 3  - red
+        (220,  80,  60),  # 3  - red
         (160, 100, 200),  # 4  - purple
         (210, 130,  70),  # 5  - orange
         (20,  110,  60),  # 6  - green
@@ -240,7 +259,7 @@ class BallRenderer(object):
         (0,     0,   0),  # 8  - black
         (230, 200, 100),  # 9  - yellow
         (100, 100, 200),  # 10 - blue
-        (200, 100, 100),  # 11 - red
+        (220,  80,  60),  # 11 - red
         (160, 100, 200),  # 12 - purple
         (210, 130,  70),  # 13 - orange
         (20,  110,  60),  # 14 - green
@@ -253,6 +272,9 @@ class BallRenderer(object):
     _NUMBER_BG_GROUP = OrderedGroup(2, _BALL_GROUP)
     _NUMBER_GROUP = OrderedGroup(3, _BALL_GROUP)
 
+    _CIRCLE_RESOLUTION = 30
+    _BALL_BG_RESOLUTION = 20
+
     _circle = None
     _top_stripe = None
     _bottom_stripe = None
@@ -260,24 +282,24 @@ class BallRenderer(object):
     _number = None
 
     def __init__(self, number, x, y, radius):
-        self._circle = CircleRenderer.new_circle(BallRenderer.COLORS[number],
-                                                 x, y, radius,
-                                                 BallRenderer._CIRCLE_GROUP)
+        self._circle = CircleRenderer.new_circle(
+            BallRenderer.COLORS[number], x, y, radius,
+            BallRenderer._CIRCLE_RESOLUTION, BallRenderer._CIRCLE_GROUP)
         if number > 8:
             self._top_stripe = CircleRenderer(
                 (255, 255, 255), x, y, radius, [CircleArc(pi / 4, 3*pi / 4)],
-                BallRenderer._STRIPE_GROUP)
+                BallRenderer._CIRCLE_RESOLUTION, BallRenderer._STRIPE_GROUP)
             self._bottom_stripe = CircleRenderer(
                 (255, 255, 255), x, y, radius, [CircleArc(-3*pi / 4, -pi / 4)],
-                BallRenderer._STRIPE_GROUP)
+                BallRenderer._CIRCLE_RESOLUTION, BallRenderer._STRIPE_GROUP)
         if number > 0:
             self._number_bg = CircleRenderer.new_circle(
-                (255, 255, 255), x, y, 6, BallRenderer._NUMBER_BG_GROUP)
+                (255, 255, 255), x, y, 6, BallRenderer._BALL_BG_RESOLUTION,
+                BallRenderer._NUMBER_BG_GROUP)
             self._number = Label(str(number), font_name="Times New Roman",
                                  font_size=9, color=(0, 0, 0, 255),
                                  x=x, y=y, anchor_x="center", anchor_y="center",
-                                 batch=Renderer.BATCH,
-                                 group=BallRenderer._NUMBER_GROUP)
+                                 batch=batch, group=BallRenderer._NUMBER_GROUP)
 
     @property
     def x(self):

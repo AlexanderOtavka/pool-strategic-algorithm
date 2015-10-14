@@ -16,7 +16,7 @@ from pyglet.gl import glClearColor
 from portmanager import PortManager
 from shot import Shot
 from ball import BallGroup
-from render import Renderer
+from render import PrimitiveRenderer, batch
 
 __author__ = "Zander Otavka"
 
@@ -25,7 +25,7 @@ with open("port.json", "r") as f:
 port_manager = PortManager(json_data["device"], json_data["port"])
 
 window = Window(1080, 540)
-balls = None
+balls = BallGroup()
 
 glClearColor(0.2, 0.6, 0.3, 1)
 
@@ -33,15 +33,13 @@ glClearColor(0.2, 0.6, 0.3, 1)
 @window.event
 def on_draw():
     window.clear()
-    Renderer.update_all_vertex_lists()
-    Renderer.BATCH.draw()
+    PrimitiveRenderer.update_all_vertex_lists()
+    batch.draw()
 
 
 @port_manager.event
 def on_get_data(data):
-    global balls
-    balls = BallGroup.from_data(data)
-    print balls
+    balls.update(data)
     port_manager.send_shot_data(Shot(angle=0, elevation=0, force=10))
 
 

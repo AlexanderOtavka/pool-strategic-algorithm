@@ -61,4 +61,5 @@ class PortManager(object):
             self._on_get_data(data)
 
     def close(self):
+        print "closing port {}".format(self._serial)
         self._serial.close()
