@@ -6,6 +6,8 @@ Pool table is 54 x 108 inches.
 
 from __future__ import division
 
+import json
+
 from pyglet.window import Window
 from pyglet.clock import schedule_interval
 from pyglet.app import run
@@ -16,24 +18,20 @@ from shot import Shot
 from ball import BallGroup
 from render import Renderer
 
-# import pyglet
-
 __author__ = "Zander Otavka"
 
+with open("port.json", "r") as f:
+    json_data = json.load(f)
+port_manager = PortManager(json_data["device"], json_data["port"])
 
 window = Window(1080, 540)
-port_manager = PortManager("/dev/foo", 9000)
 balls = None
 
+glClearColor(0.2, 0.6, 0.3, 1)
 
 @window.event
 def on_draw():
-    glClearColor(0.2, 0.6, 0.3, 1)
     window.clear()
-    # vlist = pyglet.graphics.vertex_list(
-    #     2,
-    #     ("v2i", ())
-    # )
     Renderer.update_all_vertex_lists()
     Renderer.BATCH.draw()
 
