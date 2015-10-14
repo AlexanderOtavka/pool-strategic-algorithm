@@ -21,6 +21,7 @@ from render import PrimitiveRenderer, batch
 
 __author__ = "Zander Otavka"
 
+
 with open("port.json", "r") as f:
     json_data = json.load(f)
 port_manager = PortManager(json_data["device"], json_data["port"])
