@@ -63,4 +63,4 @@ target/
 .idea/shelf/
 
 # Port is platform specific
-/port.json
+/config.json
