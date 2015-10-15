@@ -38,5 +38,9 @@ class Shot(object):
     def force(self, new):
         self._force = new
 
+    @property
+    def rating(self):
+        return 0
+
     def serialize(self):
         return self.angle, self.elevation, self.force

@@ -1,6 +1,7 @@
 """Contains Ball and BallGroup classes."""
 
 from render import BallRenderer
+from shot import Shot
 
 __author__ = "Zander Otavka"
 
@@ -46,6 +47,9 @@ class Ball(object):
         return "Ball({}, {}, {})".format(self.number, self.x, self.y)
     __str__ = __repr__
 
+    def get_possible_shots(self, balls, pockets):
+        return [Shot(angle=0, elevation=0, force=10)]
+
     def delete(self):
         self._renderer.delete()
 
@@ -58,15 +62,21 @@ class BallGroup(list):
     def update(self, data):
         point_list = [(data[i], data[i + 1]) for i in range(0, len(data), 2)]
         if len(point_list) != len(self):
-            self[:] = [Ball(index, point[0], point[1])
-                       if point[0] and point[1] else None
-                       for index, point in enumerate(point_list)]
+            self.delete()
+            for index, point in enumerate(point_list):
+                if point[0] and point[1]:
+                    self.append(Ball(index, point[0], point[1]))
         else:
-            for i, ball in enumerate(self):
-                x, y = point_list[i]
+            for ball in self:
+                x, y = point_list[ball.number]
                 if x and y:
                     ball.x = x
                     ball.y = y
                 else:
                     ball.delete()
-                    self[i] = None
+                    self.remove(ball)
+
+    def delete(self):
+        for ball in self:
+            ball.delete()
+        self[:] = []

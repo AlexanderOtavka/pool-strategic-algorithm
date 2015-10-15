@@ -14,7 +14,6 @@ from pyglet.app import run, event_loop
 from pyglet.gl import glClearColor
 
 from portmanager import PortManager
-from shot import Shot
 from ball import BallGroup
 from render import PrimitiveRenderer, batch
 
@@ -27,6 +26,7 @@ port_manager = PortManager(json_data["port"])
 
 window = Window(1080, 540)
 balls = BallGroup()
+pockets = []
 
 glClearColor(0.2, 0.6, 0.3, 1)
 
@@ -40,9 +40,15 @@ def on_draw():
 @port_manager.event
 def on_get_data(data):
     balls.update(data)
-    shot = Shot(angle=0, elevation=0, force=10)
+
+    possible_shots = []
+    for ball in balls:
+        possible_shots.extend(ball.get_possible_shots(balls, pockets))
+    best_shot = sorted(possible_shots, key=lambda s: s.rating)[0]
+
     PrimitiveRenderer.update_all_vertex_lists()
-    return shot.serialize()
+
+    return best_shot.serialize()
 
 
 @event_loop.event

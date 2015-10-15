@@ -317,7 +317,7 @@ class CircleRenderer(PrimitiveRenderer):
 class BallRenderer(Renderer):
 
     COLORS = [
-        (255, 255, 255),  # cue- white
+        (255, 255, 255),  # Q  - white
         (230, 200, 100),  # 1  - yellow
         (100, 100, 200),  # 2  - blue
         (220,  80,  60),  # 3  - red
