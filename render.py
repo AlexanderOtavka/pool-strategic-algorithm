@@ -191,7 +191,7 @@ class CircleArc(CirclePointGroup):
 
     @property
     def points(self):
-        for i in range(self.point_count):
+        for i in range(max(self.point_count, 2)):
             angle = (i * ((self.end_angle - self.start_angle) % (2 * pi)) /
                      (self.point_count - 1) + self.start_angle)
             x = (cos(angle) * self.circle_renderer.radius +
