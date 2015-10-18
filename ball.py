@@ -1,5 +1,7 @@
 """Contains Ball and BallGroup classes."""
 
+from __future__ import division, print_function
+
 from render import BallRenderer
 from shot import Shot
 
@@ -45,7 +47,6 @@ class Ball(object):
 
     def __repr__(self):
         return "Ball({}, {}, {})".format(self.number, self.x, self.y)
-    __str__ = __repr__
 
     def get_possible_shots(self, balls, pockets):
         return [Shot(angle=0, elevation=0, force=10)]

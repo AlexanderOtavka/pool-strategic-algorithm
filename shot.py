@@ -1,5 +1,7 @@
 """Contains the Shot class."""
 
+from __future__ import division, print_function
+
 __author__ = "Zander Otavka"
 
 

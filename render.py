@@ -1,6 +1,6 @@
 """Abstracts away rendering using subclasses of `Renderer`."""
 
-from __future__ import division
+from __future__ import division, print_function
 
 from abc import ABCMeta, abstractmethod, abstractproperty
 from math import pi, sin, cos, ceil

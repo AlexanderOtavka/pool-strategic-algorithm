@@ -1,5 +1,7 @@
 """Interface between the XBee and the algorithm."""
 
+from __future__ import division, print_function
+
 from serial import Serial
 from xbee import XBee
 
@@ -34,12 +36,12 @@ class PortManager(object):
 
     def __init__(self, port):
         # self._serial_port = Serial(port, 9600)
-        print "open port: {}".format(port)
+        print("open port: {}".format(port))
         self._serial_port = Serial()
 
     def _send_data(self, data):
         # TODO: implement PortManager._send_data
-        print "send data: {} to xbee: {}".format(data, self._xbee)
+        print("send data: {} to xbee: {}".format(data, self._xbee))
 
     def event(self, func):
         if func.__name__ == "on_get_data":
@@ -56,6 +58,6 @@ class PortManager(object):
         self._on_get_data(FAKE_DATA)
 
     def close(self):
-        print "closing port {}".format(self._serial_port)
+        print("closing port {}".format(self._serial_port))
         self._xbee.halt()
         self._serial_port.close()

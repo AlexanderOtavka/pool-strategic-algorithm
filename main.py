@@ -5,7 +5,7 @@ Find the best shot on the pool table.
 Pool table is 54 x 108 inches.  Each pixel is .1 inches.
 """
 
-from __future__ import division
+from __future__ import division, print_function
 
 import json
 
