@@ -4,6 +4,7 @@ from __future__ import division, print_function
 
 from render import BallRenderer
 from shot import Shot
+from vector2d import Vector2D
 
 __author__ = "Zander Otavka"
 
@@ -13,40 +14,29 @@ class Ball(object):
     RADIUS = 11.25
 
     _number = None
-    _x = None
-    _y = None
+    _position = None
     _renderer = None
 
-    def __init__(self, number, x, y):
+    def __init__(self, number, position):
         self._number = number
-        self._x = x
-        self._y = y
-        self._renderer = BallRenderer(number, x, y, Ball.RADIUS)
+        self._position = position
+        self._renderer = BallRenderer(number, position, Ball.RADIUS)
 
     @property
     def number(self):
         return self._number
 
     @property
-    def x(self):
-        return self._x
+    def position(self):
+        return self._position
 
-    @x.setter
-    def x(self, new):
-        self._x = new
-        self._renderer.x = new
-
-    @property
-    def y(self):
-        return self._y
-
-    @y.setter
-    def y(self, new):
-        self._y = new
-        self._renderer.y = new
+    @position.setter
+    def position(self, new):
+        self._position = new
+        self._renderer.position = new
 
     def __repr__(self):
-        return "Ball({}, {}, {})".format(self.number, self.x, self.y)
+        return "Ball({}, {})".format(self.number, self.position)
 
     def get_possible_shots(self, balls, pockets):
         return [Shot(angle=0, elevation=0, force=10)]
@@ -57,22 +47,26 @@ class Ball(object):
 
 class BallGroup(list):
 
+    _size = None
+
     def __init__(self):
         super(BallGroup, self).__init__()
+        self._size = 0
 
     def update(self, data):
-        point_list = [(data[i], data[i + 1]) for i in range(0, len(data), 2)]
-        if len(point_list) != len(self):
+        point_list = [Vector2D(data[i], data[i + 1])
+                      for i in range(0, len(data), 2)]
+        if len(point_list) != self._size:
             self.delete()
             for index, point in enumerate(point_list):
-                if point[0] and point[1]:
-                    self.append(Ball(index, point[0], point[1]))
+                if point:
+                    self.append(Ball(index, point))
+            self._size = len(point_list)
         else:
             for ball in self:
-                x, y = point_list[ball.number]
-                if x and y:
-                    ball.x = x
-                    ball.y = y
+                point = point_list[ball.number]
+                if point:
+                    ball.offset = point
                 else:
                     ball.delete()
                     self.remove(ball)

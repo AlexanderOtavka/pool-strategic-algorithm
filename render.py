@@ -10,6 +10,7 @@ from pyglet.gl import GL_LINES, GL_TRIANGLE_FAN
 from pyglet.text import Label
 
 from angle import simplify_radians
+from vector2d import Vector2D
 
 __author__ = "Zander Otavka"
 
@@ -124,29 +125,19 @@ class CirclePointGroup(object):
 
 class CirclePoint(CirclePointGroup):
 
-    _x = None
-    _y = None
+    _offset = None
 
-    def __init__(self, x, y, circle_renderer=None):
+    def __init__(self, offset, circle_renderer=None):
         super(CirclePoint, self).__init__(circle_renderer)
-        self._x = x
-        self._y = y
+        self._offset = offset
 
     @property
-    def x(self):
-        return self._x
+    def offset(self):
+        return self._offset
 
-    @x.setter
-    def x(self, new):
-        self._x = new
-
-    @property
-    def y(self):
-        return self._y
-
-    @y.setter
-    def y(self, new):
-        self._y = new
+    @offset.setter
+    def offset(self, new):
+        self._offset = new
 
     @property
     def point_count(self):
@@ -154,8 +145,7 @@ class CirclePoint(CirclePointGroup):
 
     @property
     def points(self):
-        return [(self.x + self.circle_renderer.x,
-                 self.y + self.circle_renderer.y)]
+        return [self.offset + self.circle_renderer.position]
 
 
 class CircleArc(CirclePointGroup):
@@ -194,28 +184,24 @@ class CircleArc(CirclePointGroup):
         for i in range(max(self.point_count, 2)):
             angle = (i * ((self.end_angle - self.start_angle) % (2 * pi)) /
                      (self.point_count - 1) + self.start_angle)
-            x = (cos(angle) * self.circle_renderer.radius +
-                 self.circle_renderer.x)
-            y = (sin(angle) * self.circle_renderer.radius +
-                 self.circle_renderer.y)
-            yield (x, y)
+            x = cos(angle) * self.circle_renderer.radius
+            y = sin(angle) * self.circle_renderer.radius
+            yield Vector2D(x, y) + self.circle_renderer.position
 
 
 class CircleRenderer(PrimitiveRenderer):
 
     DEFAULT_RESOLUTION = 50
 
-    _x = None
-    _y = None
+    _position = None
     _radius = None
     _circle_points = None
     _resolution = None
 
-    def __init__(self, color, x, y, radius, circle_points, resolution=None,
+    def __init__(self, color, position, radius, circle_points, resolution=None,
                  group=None):
         super(CircleRenderer, self).__init__(color, group)
-        self._x = x
-        self._y = y
+        self._position = position
         self._radius = radius
         for point in circle_points:
             point.circle_renderer = self
@@ -227,37 +213,29 @@ class CircleRenderer(PrimitiveRenderer):
         self._create_vertex_list()
 
     @classmethod
-    def new_circle(cls, color, x, y, radius, resolution=None, group=None):
+    def new_circle(cls, color, position, radius, resolution=None, group=None):
         circle_points = [CircleArc(0, 1.99 * pi)]
-        return cls(color, x, y, radius, circle_points, resolution, group)
+        return cls(color, position, radius, circle_points, resolution, group)
 
     @classmethod
-    def new_sector(cls, color, x, y, radius, start_angle, end_angle,
+    def new_sector(cls, color, position, radius, start_angle, end_angle,
                    resolution=None, group=None):
         circle_points = [CirclePoint(0, 0), CircleArc(start_angle, end_angle)]
-        return cls(color, x, y, radius, circle_points, resolution, group)
+        return cls(color, position, radius, circle_points, resolution, group)
 
     @classmethod
-    def new_segment(cls, color, x, y, radius, start_angle, end_angle,
+    def new_segment(cls, color, position, radius, start_angle, end_angle,
                     resolution=None, group=None):
         circle_points = [CircleArc(start_angle, end_angle)]
-        return cls(color, x, y, radius, circle_points, resolution, group)
+        return cls(color, position, radius, circle_points, resolution, group)
 
     @property
-    def x(self):
-        return self._x
+    def position(self):
+        return self._position
 
-    @x.setter
-    def x(self, new):
-        self._x = new
-
-    @property
-    def y(self):
-        return self._y
-
-    @y.setter
-    def y(self, new):
-        self._y = new
+    @position.setter
+    def position(self, new):
+        self._position = new
 
     @property
     def radius(self):
@@ -350,55 +328,41 @@ class BallRenderer(Renderer):
     _number_bg = None
     _number = None
 
-    def __init__(self, number, x, y, radius):
+    def __init__(self, number, position, radius):
         self._circle = CircleRenderer.new_circle(
-            BallRenderer.COLORS[number], x, y, radius,
+            BallRenderer.COLORS[number], position, radius,
             BallRenderer._CIRCLE_RESOLUTION, BallRenderer._CIRCLE_GROUP)
         if number > 8:
             self._top_stripe = CircleRenderer.new_segment(
-                (255, 255, 255), x, y, radius, pi / 4, 3 * pi / 4,
+                (255, 255, 255), position, radius, pi / 4, 3 * pi / 4,
                 BallRenderer._CIRCLE_RESOLUTION, BallRenderer._STRIPE_GROUP)
             self._bottom_stripe = CircleRenderer.new_segment(
-                (255, 255, 255), x, y, radius, -3 * pi / 4, -pi / 4,
+                (255, 255, 255), position, radius, -3 * pi / 4, -pi / 4,
                 BallRenderer._CIRCLE_RESOLUTION, BallRenderer._STRIPE_GROUP)
         if number > 0:
             self._number_bg = CircleRenderer.new_circle(
-                (255, 255, 255), x, y, 6, BallRenderer._BALL_BG_RESOLUTION,
+                (255, 255, 255), position, 6, BallRenderer._BALL_BG_RESOLUTION,
                 BallRenderer._NUMBER_BG_GROUP)
             self._number = Label(str(number), font_name="Times New Roman",
                                  font_size=9, color=(0, 0, 0, 255),
-                                 x=x, y=y, anchor_x="center", anchor_y="center",
+                                 x=position.x, y=position.y,
+                                 anchor_x="center", anchor_y="center",
                                  batch=batch, group=BallRenderer._NUMBER_GROUP)
 
     @property
-    def x(self):
-        return self._circle.x
+    def position(self):
+        return self._circle.position
 
-    @x.setter
-    def x(self, new):
-        self._circle.x = new
+    @position.setter
+    def position(self, new):
+        self._circle.position = new
         if self._top_stripe is not None:
-            self._top_stripe.x = new
+            self._top_stripe.position = new
         if self._bottom_stripe is not None:
-            self._bottom_stripe.x = new
+            self._bottom_stripe.position = new
         if self._number is not None:
-            self._number.x = new
-            self._number_bg.x = new
-
-    @property
-    def y(self):
-        return self._circle.y
-
-    @y.setter
-    def y(self, new):
-        self._circle.y = new
-        if self._top_stripe is not None:
-            self._top_stripe.y = new
-        if self._bottom_stripe is not None:
-            self._bottom_stripe.y = new
-        if self._number is not None:
-            self._number.y = new
-            self._number_bg.y = new
+            self._number.x, self._number.y = new
+            self._number_bg.position = new
 
     def delete(self):
         self._circle.delete()
