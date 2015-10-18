@@ -2,12 +2,13 @@
 """
 Find the best shot on the pool table.
 
-Pool table is 54 x 108 inches.  Each pixel is .1 inches.
+Each pixel is .1 inches.
 """
 
 from __future__ import division, print_function
 
 import json
+from math import sqrt
 
 from pyglet.window import Window
 from pyglet.app import run, event_loop
@@ -16,17 +17,52 @@ from pyglet.gl import glClearColor
 from portmanager import PortManager
 from ball import BallGroup
 from render import PrimitiveRenderer, batch
+from pocket import Pocket
+from vector2d import Vector2D
 
 __author__ = "Zander Otavka"
+
+
+TABLE_WIDTH = 1080
+TABLE_HEIGHT = 540
+
+CORNER_POCKET_OPENING = 45
+SIDE_POCKET_OPENING = 50
 
 
 with open("config.json", "r") as f:
     json_data = json.load(f)
 port_manager = PortManager(json_data["port"])
 
-window = Window(1080, 540)
+window = Window(TABLE_WIDTH, TABLE_HEIGHT)
 balls = BallGroup()
-pockets = []
+
+CORNER_POCKET_OFFSET = sqrt(CORNER_POCKET_OPENING ** 2 / 2)
+pockets = [
+    Pocket(Vector2D(0, 0),
+           Vector2D(0, CORNER_POCKET_OFFSET),
+           Vector2D(CORNER_POCKET_OFFSET, 0)),
+
+    Pocket(Vector2D(TABLE_WIDTH, 0),
+           Vector2D(-CORNER_POCKET_OFFSET, 0),
+           Vector2D(0, CORNER_POCKET_OFFSET)),
+
+    Pocket(Vector2D(TABLE_WIDTH, TABLE_HEIGHT),
+           Vector2D(-CORNER_POCKET_OFFSET, 0),
+           Vector2D(0, -CORNER_POCKET_OFFSET)),
+
+    Pocket(Vector2D(0, TABLE_HEIGHT),
+           Vector2D(0, -CORNER_POCKET_OFFSET),
+           Vector2D(CORNER_POCKET_OFFSET, 0)),
+
+    Pocket(Vector2D(TABLE_WIDTH / 2, 0),
+           Vector2D(-SIDE_POCKET_OPENING / 2, 0),
+           Vector2D(SIDE_POCKET_OPENING / 2, 0)),
+
+    Pocket(Vector2D(TABLE_WIDTH / 2, TABLE_HEIGHT),
+           Vector2D(-SIDE_POCKET_OPENING / 2, 0),
+           Vector2D(SIDE_POCKET_OPENING / 2, 0)),
+]
 
 glClearColor(0.2, 0.6, 0.3, 1)
 
@@ -56,5 +92,6 @@ def on_exit():
     port_manager.close()
 
 
-port_manager.open()
-run()
+if __name__ == "__main__":
+    port_manager.open()
+    run()

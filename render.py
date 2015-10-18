@@ -3,10 +3,10 @@
 from __future__ import division, print_function
 
 from abc import ABCMeta, abstractmethod, abstractproperty
-from math import pi, sin, cos, ceil
+from math import pi, sin, cos, ceil, copysign
 
 from pyglet.graphics import Batch, Group, OrderedGroup
-from pyglet.gl import GL_LINES, GL_TRIANGLE_FAN
+from pyglet.gl import GL_LINES, GL_TRIANGLE_FAN, GL_QUADS
 from pyglet.text import Label
 
 from angle import simplify_radians
@@ -377,3 +377,69 @@ class BallRenderer(Renderer):
         if self._number_bg is not None:
             self._number_bg.delete()
             self._number_bg = None
+
+
+class PocketRenderer(PrimitiveRenderer):
+
+    COLOR = (0, 0, 0)
+    PADDING = 3
+
+    _position = None
+    _offset1 = None
+    _offset2 = None
+
+    def __init__(self, position, offset1, offset2, group=None):
+        super(PocketRenderer, self).__init__(PocketRenderer.COLOR, group)
+        self._position = position
+        self._offset1 = offset1
+        self._offset2 = offset2
+        self._create_vertex_list()
+
+    @property
+    def position(self):
+        return self._position
+
+    @position.setter
+    def position(self, new):
+        self._position = new
+
+    @property
+    def offset1(self):
+        return self._offset1
+
+    @offset1.setter
+    def offset1(self, new):
+        self._offset1 = new
+
+    @property
+    def offset2(self):
+        return self._offset2
+
+    @offset2.setter
+    def offset2(self, new):
+        self._offset2 = new
+
+    def _create_vertex_list(self):
+        self._vertex_list = batch.add(4, GL_QUADS, self._group, "v2f", "c3B")
+
+    def update_vertex_list(self):
+        offset_angle = (self.offset2 - self.offset1).direction
+        p1_to_back = -self.offset1
+        p1_to_back.direction -= offset_angle
+        back_distance = p1_to_back.y + copysign(PocketRenderer.PADDING,
+                                                p1_to_back.y)
+        back_offset_vector = Vector2D.from_polar(back_distance,
+                                                 offset_angle + pi / 2)
+        front_distance = -copysign(PocketRenderer.PADDING, back_distance)
+        front_offset_vector = Vector2D.from_polar(front_distance,
+                                                  offset_angle + pi / 2)
+        points = [self.offset1 + back_offset_vector + self.position,
+                  self.offset2 + back_offset_vector + self.position,
+                  self.offset2 + front_offset_vector + self.position,
+                  self.offset1 + front_offset_vector + self.position]
+        self._vertex_list.vertices[:] = [number for point in points
+                                         for number in point]
+        self._vertex_list.colors[:] = self.color * 4
+
+    def delete(self):
+        super(PocketRenderer, self).delete()

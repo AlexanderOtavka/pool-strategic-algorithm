@@ -2,7 +2,7 @@
 
 from __future__ import division, print_function
 
-from math import atan2, sqrt
+from math import atan2, sqrt, sin, cos
 
 __author__ = "Zander Otavka"
 
@@ -13,6 +13,12 @@ class Vector2D(object):
 
     def __init__(self, x=0, y=0):
         self._components = [x, y]
+
+    @classmethod
+    def from_polar(cls, magnitude, direction):
+        x = cos(direction) * magnitude
+        y = sin(direction) * magnitude
+        return cls(x, y)
 
     @property
     def x(self):
@@ -34,12 +40,24 @@ class Vector2D(object):
     def magnitude(self):
         return sqrt(self.x ** 2 + self.y ** 2)
 
+    @magnitude.setter
+    def magnitude(self, new):
+        direction = self.direction
+        self.x = cos(direction) * new
+        self.y = sin(direction) * new
+
     @property
     def direction(self):
         return atan2(self.y, self.x)
 
+    @direction.setter
+    def direction(self, new):
+        magnitude = self.magnitude
+        self.x = cos(new) * magnitude
+        self.y = sin(new) * magnitude
+
     def copy(self):
-        return Vector2D(self.x, self.y)
+        return +self
 
     def __add__(self, other):
         return Vector2D(self.x + other.x, self.y + other.y)
@@ -78,6 +96,12 @@ class Vector2D(object):
 
     def __rtruediv__(self, scalar):
         return self / scalar
+
+    def __neg__(self):
+        return Vector2D(-self.x, -self.y)
+
+    def __pos__(self):
+        return Vector2D(+self.x, +self.y)
 
     def __nonzero__(self):
         return self.x or self.y
