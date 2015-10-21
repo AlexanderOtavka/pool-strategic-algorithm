@@ -35,15 +35,24 @@ class PortManager(object):
     _on_get_data = None
 
     def __init__(self, port):
+        """
+        :type port: unicode
+        """
         # self._serial_port = Serial(port, 9600)
         print("open port: {}".format(port))
         self._serial_port = Serial()
 
     def _send_data(self, data):
+        """
+        :type data: tuple
+        """
         # TODO: implement PortManager._send_data
         print("send data: {} to xbee: {}".format(data, self._xbee))
 
     def event(self, func):
+        """
+        :type func: (list[int]) -> tuple
+        """
         if func.__name__ == "on_get_data":
             def on_get_data(data):
                 # TODO: parse the data into an array

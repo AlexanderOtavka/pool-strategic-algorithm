@@ -9,6 +9,9 @@ __author__ = "Zander Otavka"
 
 
 class Pocket(object):
+    """
+    :type _renderer: PocketRenderer
+    """
 
     _position = None
     _offset1 = None
@@ -18,6 +21,12 @@ class Pocket(object):
     name = None
 
     def __init__(self, position, offset1, offset2, name=None):
+        """
+        :type position: vector2d.Vector2D
+        :type offset1: vector2d.Vector2D
+        :type offset2: vector2d.Vector2D
+        :type name: str
+        """
         self._position = position
         self._offset1 = offset1
         self._offset2 = offset2
@@ -53,6 +62,9 @@ class Pocket(object):
 
     @property
     def target(self):
+        """
+        :rtype: ShotTarget
+        """
         p1 = self.position + self.offset1
         p2 = self.position + self.offset2
         f = -(self.offset1 + self.offset2) / 2

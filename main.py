@@ -33,7 +33,7 @@ SIDE_POCKET_OPENING = 50
 
 with open("config.json", "r") as f:
     json_data = json.load(f)
-port_manager = PortManager(json_data["port"])
+port = PortManager(json_data["port"])
 
 window = Window(TABLE_WIDTH, TABLE_HEIGHT)
 balls = BallGroup()
@@ -82,23 +82,21 @@ def on_draw():
     batch.draw()
 
 
-@port_manager.event
+@port.event
 def on_get_data(data):
     balls.update(data)
     shots.update(pockets, balls)
-
     PrimitiveRenderer.update_all_vertex_lists()
-
     return shots.best_shot.to_array()
 
 
 @event_loop.event
 def on_exit():
-    port_manager.close()
+    port.close()
     balls.delete()
     shots.delete()
 
 
 if __name__ == "__main__":
-    port_manager.open()
+    port.open()
     run()

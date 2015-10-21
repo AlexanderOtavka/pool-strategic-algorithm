@@ -35,8 +35,8 @@ class ShotSegment(object):
 
     def __init__(self, target, actor_ball, balls):
         """
-        :type actor_ball: Ball
         :type target: ShotTarget
+        :type actor_ball: Ball
         :type balls: BallGroup
         """
         self._position = actor_ball.position
@@ -123,27 +123,29 @@ class ShotSegment(object):
 
     @property
     def target(self):
+        """
+        :rtype: ShotTarget
+        """
+        p1 = self.position + Vector2D.from_polar(-self._radius * 2,
+                                                 self.vector1.direction)
+        p2 = self.position + Vector2D.from_polar(-self._radius * 2,
+                                                 self.vector2.direction)
+        f = (self.vector1 + self.vector2) / 2
         # noinspection PyTypeChecker
-        return ShotTarget(
-            self.position + Vector2D.from_polar(-self._radius * 2,
-                                                self.vector1.direction),
-            self.position + Vector2D.from_polar(-self._radius * 2,
-                                                self.vector2.direction),
-            (self.vector1 + self.vector2) / 2
-        )
+        return ShotTarget(p1, p2, f)
 
     def delete(self):
         self._renderer.delete()
 
 
 class Shot(object):
-    """
-    :type _segments: list[ShotSegment]
-    """
 
     _segments = None
 
     def __init__(self, *segments):
+        """
+        :type segments: tuple[ShotSegment]
+        """
         self._segments = segments
 
     @property
@@ -163,6 +165,9 @@ class Shot(object):
         return 0
 
     def to_array(self):
+        """
+        :rtype: tuple
+        """
         return self.angle, self.force, self.elevation
 
     def delete(self):

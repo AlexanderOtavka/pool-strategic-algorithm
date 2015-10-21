@@ -6,6 +6,7 @@ from abc import ABCMeta, abstractmethod, abstractproperty
 from math import pi, sin, cos, ceil, copysign
 
 from pyglet.graphics import Batch, Group, OrderedGroup
+from pyglet.graphics.vertexdomain import VertexList
 from pyglet.gl import GL_LINE_LOOP, GL_LINE_STRIP, GL_TRIANGLE_FAN, GL_QUADS
 from pyglet.text import Label
 
@@ -27,6 +28,9 @@ class Renderer(object):
 
 
 class PrimitiveRenderer(Renderer):
+    """
+    :type _vertex_list: VertexList
+    """
     __metaclass__ = ABCMeta
 
     _renderers = []
@@ -36,6 +40,10 @@ class PrimitiveRenderer(Renderer):
     _color = None
 
     def __init__(self, color, group=None):
+        """
+        :type color: (int, int, int)
+        :type group: Group
+        """
         PrimitiveRenderer._renderers.append(self)
         self._group = Group(parent=group)
         self._color = color
@@ -63,15 +71,17 @@ class PrimitiveRenderer(Renderer):
 
 
 class PolygonRenderer(PrimitiveRenderer):
-    """
-    :type _points: list[Vector2D]
-    :type _mode: int
-    """
 
     _points = None
     _mode = None
 
     def __init__(self, color, points, mode=None, group=None):
+        """
+        :type color: (int, int, int)
+        :type points: tuple[Vector2D]
+        :type mode: int
+        :type group: Group
+        """
         super(PolygonRenderer, self).__init__(color, group)
         self._points = points
         if mode is None:
@@ -113,6 +123,9 @@ class CirclePointGroup(object):
     _circle_renderer = None
 
     def __init__(self, circle_renderer=None):
+        """
+        :type circle_renderer: CircleRenderer
+        """
         self._circle_renderer = circle_renderer
 
     @property
@@ -125,10 +138,16 @@ class CirclePointGroup(object):
 
     @abstractproperty
     def point_count(self):
+        """
+        :rtype: int
+        """
         pass
 
     @abstractproperty
     def points(self):
+        """
+        :rtype: collections.Iterable[Vector2D]
+        """
         pass
 
     def delete(self):
@@ -140,6 +159,10 @@ class CirclePoint(CirclePointGroup):
     _offset = None
 
     def __init__(self, offset, circle_renderer=None):
+        """
+        :type offset: Vector2D
+        :type circle_renderer: CircleRenderer
+        """
         super(CirclePoint, self).__init__(circle_renderer)
         self._offset = offset
 
@@ -166,6 +189,11 @@ class CircleArc(CirclePointGroup):
     _end_angle = None
 
     def __init__(self, start_angle, end_angle, circle_renderer=None):
+        """
+        :type start_angle: float
+        :type end_angle: float
+        :type circle_renderer: CircleRenderer
+        """
         super(CircleArc, self).__init__(circle_renderer)
         self._start_angle = positive_radians(start_angle)
         self._end_angle = positive_radians(end_angle)
@@ -212,6 +240,14 @@ class CircleRenderer(PrimitiveRenderer):
 
     def __init__(self, color, position, radius, circle_points, resolution=None,
                  group=None):
+        """
+        :type color: (int, int, int)
+        :type position: Vector2D
+        :type radius: float or int
+        :type circle_points: list[CirclePointGroup]
+        :type resolution: int
+        :type group: Group
+        """
         super(CircleRenderer, self).__init__(color, group)
         self._position = position
         self._radius = radius
@@ -226,18 +262,44 @@ class CircleRenderer(PrimitiveRenderer):
 
     @classmethod
     def new_circle(cls, color, position, radius, resolution=None, group=None):
+        """
+        :type color: (int, int, int)
+        :type position: Vector2D
+        :type radius: float or int
+        :type resolution: int
+        :type group: Group
+        """
         circle_points = [CircleArc(0, 1.99 * pi)]
         return cls(color, position, radius, circle_points, resolution, group)
 
     @classmethod
     def new_sector(cls, color, position, radius, start_angle, end_angle,
                    resolution=None, group=None):
-        circle_points = [CirclePoint(0, 0), CircleArc(start_angle, end_angle)]
+        """
+        :type color: (int, int, int)
+        :type position: Vector2D
+        :type radius: float or int
+        :type start_angle: float or int
+        :type end_angle: float or int
+        :type resolution: int
+        :type group: Group
+        """
+        circle_points = [CirclePoint(Vector2D()),
+                         CircleArc(start_angle, end_angle)]
         return cls(color, position, radius, circle_points, resolution, group)
 
     @classmethod
     def new_segment(cls, color, position, radius, start_angle, end_angle,
                     resolution=None, group=None):
+        """
+        :type color: (int, int, int)
+        :type position: Vector2D
+        :type radius: float or int
+        :type start_angle: float or int
+        :type end_angle: float or int
+        :type resolution: int
+        :type group: Group
+        """
         circle_points = [CircleArc(start_angle, end_angle)]
         return cls(color, position, radius, circle_points, resolution, group)
 
@@ -290,7 +352,8 @@ class CircleRenderer(PrimitiveRenderer):
 
         points = []
         for circle_point in self.circle_points:
-            points.extend(list(circle_point.points))
+            # noinspection PyTypeChecker
+            points.extend(circle_point.points)
 
         assert self.point_count == len(points)
         self._vertex_list.vertices[:] = [number for point in points
@@ -341,6 +404,11 @@ class BallRenderer(Renderer):
     _number = None
 
     def __init__(self, number, position, radius):
+        """
+        :type number: int
+        :type position: Vector2D
+        :type radius: int or float
+        """
         self._circle = CircleRenderer.new_circle(
             BallRenderer.COLORS[number], position, radius,
             BallRenderer._CIRCLE_RESOLUTION, BallRenderer._CIRCLE_GROUP)
@@ -403,6 +471,11 @@ class PocketRenderer(PrimitiveRenderer):
     _offset2 = None
 
     def __init__(self, position, offset1, offset2):
+        """
+        :type position: Vector2D
+        :type offset1: Vector2D
+        :type offset2: Vector2D
+        """
         super(PocketRenderer, self).__init__(PocketRenderer.COLOR,
                                              PocketRenderer._POCKET_GROUP)
         self._position = position
@@ -460,9 +533,6 @@ class PocketRenderer(PrimitiveRenderer):
 
 
 class ShotSegmentRenderer(Renderer):
-    """
-    :type _renderer: PolygonRenderer
-    """
 
     _SHOT_GROUP = OrderedGroup(1)
 
