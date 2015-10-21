@@ -3,13 +3,17 @@
 from __future__ import division, print_function
 
 from render import BallRenderer
-from shot import Shot
 from vector2d import Vector2D
 
 __author__ = "Zander Otavka"
 
 
 class Ball(object):
+    """
+    :type _number: int
+    :type _position: Vector2D
+    :type _renderer: BallRenderer
+    """
 
     RADIUS = 11.25
 
@@ -38,14 +42,14 @@ class Ball(object):
     def __repr__(self):
         return "Ball({}, {})".format(self.number, self.position)
 
-    def get_possible_shots(self, balls, pockets):
-        return [Shot(angle=0, elevation=0, force=10)]
-
     def delete(self):
         self._renderer.delete()
 
 
 class BallGroup(list):
+    """
+    :type _size: int
+    """
 
     _size = None
 
@@ -54,6 +58,9 @@ class BallGroup(list):
         self._size = 0
 
     def update(self, data):
+        """
+        :type data: list[int]
+        """
         point_list = [Vector2D(data[i], data[i + 1])
                       for i in range(0, len(data), 2)]
         if len(point_list) != self._size:
@@ -70,6 +77,14 @@ class BallGroup(list):
                 else:
                     ball.delete()
                     self.remove(ball)
+
+    def copy(self):
+        """
+        :rtype: BallGroup
+        """
+        clone = BallGroup()
+        clone[:] = self[:]
+        return clone
 
     def delete(self):
         for ball in self:

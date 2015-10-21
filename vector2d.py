@@ -2,16 +2,25 @@
 
 from __future__ import division, print_function
 
-from math import atan2, sqrt, sin, cos
+from math import atan2, hypot, sin, cos
+
+from angle import positive_radians
 
 __author__ = "Zander Otavka"
 
 
 class Vector2D(object):
+    """
+    :type _components: list[int or float]
+    """
 
     _components = None
 
     def __init__(self, x=0, y=0):
+        """
+        :type x: int or float
+        :type y: int or float
+        """
         self._components = [x, y]
 
     @classmethod
@@ -38,7 +47,7 @@ class Vector2D(object):
 
     @property
     def magnitude(self):
-        return sqrt(self.x ** 2 + self.y ** 2)
+        return hypot(self.x, self.y)
 
     @magnitude.setter
     def magnitude(self, new):
@@ -48,13 +57,16 @@ class Vector2D(object):
 
     @property
     def direction(self):
-        return atan2(self.y, self.x)
+        return positive_radians(atan2(self.y, self.x))
 
     @direction.setter
     def direction(self, new):
         magnitude = self.magnitude
         self.x = cos(new) * magnitude
         self.y = sin(new) * magnitude
+
+    def normalized(self):
+        return Vector2D.from_polar(1, self.direction)
 
     def copy(self):
         return +self
@@ -84,7 +96,7 @@ class Vector2D(object):
         return self
 
     def __rmul__(self, scalar):
-        return self * scalar
+        return Vector2D(scalar * self.x, scalar * self.y)
 
     def __truediv__(self, scalar):
         return Vector2D(self.x / scalar, self.y / scalar)
@@ -95,7 +107,13 @@ class Vector2D(object):
         return self
 
     def __rtruediv__(self, scalar):
-        return self / scalar
+        return Vector2D(scalar / self.x, scalar / self.y)
+
+    def __eq__(self, other):
+        return self.x == other.x and self.y == other.y
+
+    def __ne__(self, other):
+        return not self == other
 
     def __neg__(self):
         return Vector2D(-self.x, -self.y)

@@ -6,10 +6,10 @@ from abc import ABCMeta, abstractmethod, abstractproperty
 from math import pi, sin, cos, ceil, copysign
 
 from pyglet.graphics import Batch, Group, OrderedGroup
-from pyglet.gl import GL_LINES, GL_TRIANGLE_FAN, GL_QUADS
+from pyglet.gl import GL_LINE_LOOP, GL_LINE_STRIP, GL_TRIANGLE_FAN, GL_QUADS
 from pyglet.text import Label
 
-from angle import simplify_radians
+from angle import positive_radians
 from vector2d import Vector2D
 
 __author__ = "Zander Otavka"
@@ -62,13 +62,21 @@ class PrimitiveRenderer(Renderer):
         pass
 
 
-class LineRenderer(PrimitiveRenderer):
+class PolygonRenderer(PrimitiveRenderer):
+    """
+    :type _points: list[Vector2D]
+    :type _mode: int
+    """
 
     _points = None
+    _mode = None
 
-    def __init__(self, color, points, group=None):
-        super(LineRenderer, self).__init__(color, group)
+    def __init__(self, color, points, mode=None, group=None):
+        super(PolygonRenderer, self).__init__(color, group)
         self._points = points
+        if mode is None:
+            mode = GL_LINE_LOOP
+        self._mode = mode
         self._create_vertex_list()
 
     @property
@@ -77,10 +85,14 @@ class LineRenderer(PrimitiveRenderer):
 
     @points.setter
     def points(self, new):
-        self.points = new
+        self._points = new
+
+    @property
+    def mode(self):
+        return self._mode
 
     def _create_vertex_list(self):
-        self._vertex_list = batch.add(len(self.points), GL_LINES, self._group,
+        self._vertex_list = batch.add(len(self.points), self._mode, self._group,
                                       "v2f", "c3B")
 
     def update_vertex_list(self):
@@ -92,7 +104,7 @@ class LineRenderer(PrimitiveRenderer):
         self._vertex_list.colors[:] = self.color * len(self.points)
 
     def delete(self):
-        super(LineRenderer, self).delete()
+        super(PolygonRenderer, self).delete()
 
 
 class CirclePointGroup(object):
@@ -155,8 +167,8 @@ class CircleArc(CirclePointGroup):
 
     def __init__(self, start_angle, end_angle, circle_renderer=None):
         super(CircleArc, self).__init__(circle_renderer)
-        self._start_angle = simplify_radians(start_angle)
-        self._end_angle = simplify_radians(end_angle)
+        self._start_angle = positive_radians(start_angle)
+        self._end_angle = positive_radians(end_angle)
 
     @property
     def start_angle(self):
@@ -164,7 +176,7 @@ class CircleArc(CirclePointGroup):
 
     @start_angle.setter
     def start_angle(self, new):
-        self._start_angle = simplify_radians(new)
+        self._start_angle = positive_radians(new)
 
     @property
     def end_angle(self):
@@ -172,7 +184,7 @@ class CircleArc(CirclePointGroup):
 
     @end_angle.setter
     def end_angle(self, new):
-        self._end_angle = simplify_radians(new)
+        self._end_angle = positive_radians(new)
 
     @property
     def point_count(self):
@@ -313,7 +325,7 @@ class BallRenderer(Renderer):
         (130,  90,  30),  # 15 - brown
     ]
 
-    _BALL_GROUP = Group()
+    _BALL_GROUP = OrderedGroup(2)
     _CIRCLE_GROUP = OrderedGroup(0, _BALL_GROUP)
     _STRIPE_GROUP = OrderedGroup(1, _BALL_GROUP)
     _NUMBER_BG_GROUP = OrderedGroup(2, _BALL_GROUP)
@@ -382,14 +394,17 @@ class BallRenderer(Renderer):
 class PocketRenderer(PrimitiveRenderer):
 
     COLOR = (0, 0, 0)
-    PADDING = 3
+    FRONT_DISTANCE = 3
+
+    _POCKET_GROUP = OrderedGroup(0)
 
     _position = None
     _offset1 = None
     _offset2 = None
 
-    def __init__(self, position, offset1, offset2, group=None):
-        super(PocketRenderer, self).__init__(PocketRenderer.COLOR, group)
+    def __init__(self, position, offset1, offset2):
+        super(PocketRenderer, self).__init__(PocketRenderer.COLOR,
+                                             PocketRenderer._POCKET_GROUP)
         self._position = position
         self._offset1 = offset1
         self._offset2 = offset2
@@ -426,11 +441,10 @@ class PocketRenderer(PrimitiveRenderer):
         offset_angle = (self.offset2 - self.offset1).direction
         p1_to_back = -self.offset1
         p1_to_back.direction -= offset_angle
-        back_distance = p1_to_back.y + copysign(PocketRenderer.PADDING,
-                                                p1_to_back.y)
+        back_distance = p1_to_back.y
         back_offset_vector = Vector2D.from_polar(back_distance,
                                                  offset_angle + pi / 2)
-        front_distance = -copysign(PocketRenderer.PADDING, back_distance)
+        front_distance = -copysign(PocketRenderer.FRONT_DISTANCE, back_distance)
         front_offset_vector = Vector2D.from_polar(front_distance,
                                                   offset_angle + pi / 2)
         points = [self.offset1 + back_offset_vector + self.position,
@@ -443,3 +457,28 @@ class PocketRenderer(PrimitiveRenderer):
 
     def delete(self):
         super(PocketRenderer, self).delete()
+
+
+class ShotSegmentRenderer(Renderer):
+    """
+    :type _renderer: PolygonRenderer
+    """
+
+    _SHOT_GROUP = OrderedGroup(1)
+
+    _renderer = None
+
+    def __init__(self, ball_number, position, vector1, vector2):
+        """
+        :type ball_number: int
+        :type position: Vector2D
+        :type vector1: Vector2D
+        :type vector2: Vector2D
+        """
+        color = BallRenderer.COLORS[ball_number]
+        self._renderer = PolygonRenderer(
+            color, (position + vector1, position, position + vector2),
+            GL_LINE_STRIP, ShotSegmentRenderer._SHOT_GROUP)
+
+    def delete(self):
+        self._renderer.delete()

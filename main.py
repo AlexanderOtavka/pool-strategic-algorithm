@@ -16,6 +16,7 @@ from pyglet.gl import glClearColor
 
 from portmanager import PortManager
 from ball import BallGroup
+from shot import ShotGroup
 from render import PrimitiveRenderer, batch
 from pocket import Pocket
 from vector2d import Vector2D
@@ -36,32 +37,40 @@ port_manager = PortManager(json_data["port"])
 
 window = Window(TABLE_WIDTH, TABLE_HEIGHT)
 balls = BallGroup()
+shots = ShotGroup()
 
 CORNER_POCKET_OFFSET = sqrt(CORNER_POCKET_OPENING ** 2 / 2)
+SIDE_POCKET_DEPTH = 20
 pockets = [
     Pocket(Vector2D(0, 0),
            Vector2D(0, CORNER_POCKET_OFFSET),
-           Vector2D(CORNER_POCKET_OFFSET, 0)),
+           Vector2D(CORNER_POCKET_OFFSET, 0),
+           name="Bottom Left"),
 
     Pocket(Vector2D(TABLE_WIDTH, 0),
            Vector2D(-CORNER_POCKET_OFFSET, 0),
-           Vector2D(0, CORNER_POCKET_OFFSET)),
+           Vector2D(0, CORNER_POCKET_OFFSET),
+           name="Bottom Right"),
 
     Pocket(Vector2D(TABLE_WIDTH, TABLE_HEIGHT),
            Vector2D(-CORNER_POCKET_OFFSET, 0),
-           Vector2D(0, -CORNER_POCKET_OFFSET)),
+           Vector2D(0, -CORNER_POCKET_OFFSET),
+           name="Top Right"),
 
     Pocket(Vector2D(0, TABLE_HEIGHT),
            Vector2D(0, -CORNER_POCKET_OFFSET),
-           Vector2D(CORNER_POCKET_OFFSET, 0)),
+           Vector2D(CORNER_POCKET_OFFSET, 0),
+           name="Top Left"),
 
-    Pocket(Vector2D(TABLE_WIDTH / 2, 0),
-           Vector2D(-SIDE_POCKET_OPENING / 2, 0),
-           Vector2D(SIDE_POCKET_OPENING / 2, 0)),
+    Pocket(Vector2D(TABLE_WIDTH / 2, -SIDE_POCKET_DEPTH),
+           Vector2D(-SIDE_POCKET_OPENING / 2, SIDE_POCKET_DEPTH),
+           Vector2D(SIDE_POCKET_OPENING / 2, SIDE_POCKET_DEPTH),
+           name="Bottom Center"),
 
-    Pocket(Vector2D(TABLE_WIDTH / 2, TABLE_HEIGHT),
-           Vector2D(-SIDE_POCKET_OPENING / 2, 0),
-           Vector2D(SIDE_POCKET_OPENING / 2, 0)),
+    Pocket(Vector2D(TABLE_WIDTH / 2, TABLE_HEIGHT + SIDE_POCKET_DEPTH),
+           Vector2D(-SIDE_POCKET_OPENING / 2, -SIDE_POCKET_DEPTH),
+           Vector2D(SIDE_POCKET_OPENING / 2, -SIDE_POCKET_DEPTH),
+           name="Top Center"),
 ]
 
 glClearColor(0.2, 0.6, 0.3, 1)
@@ -76,20 +85,18 @@ def on_draw():
 @port_manager.event
 def on_get_data(data):
     balls.update(data)
-
-    possible_shots = []
-    for ball in balls:
-        possible_shots.extend(ball.get_possible_shots(balls, pockets))
-    best_shot = sorted(possible_shots, key=lambda s: s.rating)[0]
+    shots.update(pockets, balls)
 
     PrimitiveRenderer.update_all_vertex_lists()
 
-    return best_shot.serialize()
+    return shots.best_shot.to_array()
 
 
 @event_loop.event
 def on_exit():
     port_manager.close()
+    balls.delete()
+    shots.delete()
 
 
 if __name__ == "__main__":

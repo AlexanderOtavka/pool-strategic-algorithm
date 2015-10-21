@@ -1,6 +1,9 @@
 """Contains Pocket class."""
 
+from __future__ import division, print_function
+
 from render import PocketRenderer
+from target import ShotTarget
 
 __author__ = "Zander Otavka"
 
@@ -8,15 +11,18 @@ __author__ = "Zander Otavka"
 class Pocket(object):
 
     _position = None
-    _point1 = None
-    _point2 = None
+    _offset1 = None
+    _offset2 = None
     _renderer = None
 
-    def __init__(self, position, offset1, offset2):
+    name = None
+
+    def __init__(self, position, offset1, offset2, name=None):
         self._position = position
-        self._point1 = offset1 + position
-        self._point2 = offset2 + position
+        self._offset1 = offset1
+        self._offset2 = offset2
         self._renderer = PocketRenderer(position, offset1, offset2)
+        self.name = name
 
     @property
     def position(self):
@@ -28,22 +34,29 @@ class Pocket(object):
         self._renderer.position = new
 
     @property
-    def point1(self):
-        return self._point1
+    def offset1(self):
+        return self._offset1
 
-    @point1.setter
-    def point1(self, new):
-        self._point1 = new
-        self._renderer.offset1 = new - self.position
+    @offset1.setter
+    def offset1(self, new):
+        self._offset1 = new
+        self._renderer.offset1 = new
 
     @property
-    def point2(self):
-        return self._point2
+    def offset2(self):
+        return self._offset2
 
-    @point2.setter
-    def point2(self, new):
-        self._point2 = new
-        self._renderer.offset2 = new - self.position
+    @offset2.setter
+    def offset2(self, new):
+        self._offset2 = new
+        self._renderer.offset2 = new
+
+    @property
+    def target(self):
+        p1 = self.position + self.offset1
+        p2 = self.position + self.offset2
+        # noinspection PyTypeChecker
+        return ShotTarget(p1, p2, self.position - (p1 + p2) / 2, name=self.name)
 
     def delete(self):
         self._renderer.delete()
