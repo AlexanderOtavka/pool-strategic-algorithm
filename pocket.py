@@ -55,8 +55,9 @@ class Pocket(object):
     def target(self):
         p1 = self.position + self.offset1
         p2 = self.position + self.offset2
+        f = -(self.offset1 + self.offset2) / 2
         # noinspection PyTypeChecker
-        return ShotTarget(p1, p2, self.position - (p1 + p2) / 2, name=self.name)
+        return ShotTarget(p1, p2, f, name=self.name)
 
     def delete(self):
         self._renderer.delete()

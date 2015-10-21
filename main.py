@@ -40,7 +40,7 @@ balls = BallGroup()
 shots = ShotGroup()
 
 CORNER_POCKET_OFFSET = sqrt(CORNER_POCKET_OPENING ** 2 / 2)
-SIDE_POCKET_DEPTH = 20
+SIDE_POCKET_DEPTH = sqrt(CORNER_POCKET_OFFSET ** 2 / 2)
 pockets = [
     Pocket(Vector2D(0, 0),
            Vector2D(0, CORNER_POCKET_OFFSET),
