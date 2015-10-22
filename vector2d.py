@@ -4,7 +4,7 @@ from __future__ import division, print_function
 
 from math import atan2, hypot, sin, cos
 
-from angle import positive_radians
+from angle import Angle
 
 __author__ = "Zander Otavka"
 
@@ -57,7 +57,7 @@ class Vector2D(object):
 
     @property
     def direction(self):
-        return positive_radians(atan2(self.y, self.x))
+        return Angle(atan2(self.y, self.x))
 
     @direction.setter
     def direction(self, new):

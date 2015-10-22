@@ -10,7 +10,7 @@ from pyglet.graphics.vertexdomain import VertexList
 from pyglet.gl import GL_LINE_LOOP, GL_LINE_STRIP, GL_TRIANGLE_FAN, GL_QUADS
 from pyglet.text import Label
 
-from angle import positive_radians
+from angle import Angle
 from vector2d import Vector2D
 
 __author__ = "Zander Otavka"
@@ -190,13 +190,13 @@ class CircleArc(CirclePointGroup):
 
     def __init__(self, start_angle, end_angle, circle_renderer=None):
         """
-        :type start_angle: float
-        :type end_angle: float
+        :type start_angle: Angle
+        :type end_angle: Angle
         :type circle_renderer: CircleRenderer
         """
         super(CircleArc, self).__init__(circle_renderer)
-        self._start_angle = positive_radians(start_angle)
-        self._end_angle = positive_radians(end_angle)
+        self._start_angle = start_angle
+        self._end_angle = end_angle
 
     @property
     def start_angle(self):
@@ -204,7 +204,7 @@ class CircleArc(CirclePointGroup):
 
     @start_angle.setter
     def start_angle(self, new):
-        self._start_angle = positive_radians(new)
+        self._start_angle = new
 
     @property
     def end_angle(self):
@@ -212,18 +212,19 @@ class CircleArc(CirclePointGroup):
 
     @end_angle.setter
     def end_angle(self, new):
-        self._end_angle = positive_radians(new)
+        self._end_angle = new
 
     @property
     def point_count(self):
-        return int(abs(ceil((self.end_angle - self.start_angle) / (2 * pi) *
-                            self.circle_renderer.resolution)))
+        return int(abs(ceil(float(self.end_angle - self.start_angle) /
+                            (2 * pi) * self.circle_renderer.resolution)))
 
     @property
     def points(self):
         for i in range(max(self.point_count, 2)):
-            angle = (i * ((self.end_angle - self.start_angle) % (2 * pi)) /
-                     (self.point_count - 1) + self.start_angle)
+            angle = (i * ((self.end_angle - self.start_angle) /
+                          (self.point_count - 1)) +
+                     self.start_angle)
             x = cos(angle) * self.circle_renderer.radius
             y = sin(angle) * self.circle_renderer.radius
             yield Vector2D(x, y) + self.circle_renderer.position
@@ -269,7 +270,7 @@ class CircleRenderer(PrimitiveRenderer):
         :type resolution: int
         :type group: Group
         """
-        circle_points = [CircleArc(0, 1.99 * pi)]
+        circle_points = [CircleArc(Angle(0), Angle(1.99 * pi))]
         return cls(color, position, radius, circle_points, resolution, group)
 
     @classmethod
@@ -279,8 +280,8 @@ class CircleRenderer(PrimitiveRenderer):
         :type color: (int, int, int)
         :type position: Vector2D
         :type radius: float or int
-        :type start_angle: float or int
-        :type end_angle: float or int
+        :type start_angle: Angle
+        :type end_angle: Angle
         :type resolution: int
         :type group: Group
         """
@@ -295,8 +296,8 @@ class CircleRenderer(PrimitiveRenderer):
         :type color: (int, int, int)
         :type position: Vector2D
         :type radius: float or int
-        :type start_angle: float or int
-        :type end_angle: float or int
+        :type start_angle: Angle
+        :type end_angle: Angle
         :type resolution: int
         :type group: Group
         """
@@ -414,10 +415,12 @@ class BallRenderer(Renderer):
             BallRenderer._CIRCLE_RESOLUTION, BallRenderer._CIRCLE_GROUP)
         if number > 8:
             self._top_stripe = CircleRenderer.new_segment(
-                (255, 255, 255), position, radius, pi / 4, 3 * pi / 4,
+                (255, 255, 255), position, radius,
+                Angle(pi / 4), Angle(3 * pi / 4),
                 BallRenderer._CIRCLE_RESOLUTION, BallRenderer._STRIPE_GROUP)
             self._bottom_stripe = CircleRenderer.new_segment(
-                (255, 255, 255), position, radius, -3 * pi / 4, -pi / 4,
+                (255, 255, 255), position, radius,
+                Angle(-3 * pi / 4), Angle(-pi / 4),
                 BallRenderer._CIRCLE_RESOLUTION, BallRenderer._STRIPE_GROUP)
         if number > 0:
             self._number_bg = CircleRenderer.new_circle(

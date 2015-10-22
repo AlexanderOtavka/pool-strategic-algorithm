@@ -5,7 +5,7 @@ from __future__ import division, print_function
 from math import pi, tan
 
 from vector2d import Vector2D
-from angle import positive_radians, abs_radians, Hemisphere, get_quadrant
+from angle import Hemisphere
 from ball import Ball, BallGroup
 from render import ShotSegmentRenderer
 from target import ShotTarget
@@ -47,8 +47,8 @@ class ShotSegment(object):
         v2 = target.point2 - actor_ball.position
 
         # find ball radius offsets
-        if (abs_radians(v2.direction - (v1.direction + pi / 2)) <
-                abs_radians(v2.direction - (v1.direction - pi / 2))):
+        if (abs(v2.direction - (v1.direction + pi / 2)) <
+                abs(v2.direction - (v1.direction - pi / 2))):
             sign = 1
         else:
             sign = -1
@@ -60,8 +60,8 @@ class ShotSegment(object):
         # derive a system of inequalities from the vectors and offsets
         p1 = actor_ball.position + off1
         p2 = actor_ball.position + off2
-        v1quad = get_quadrant(v1.direction)
-        v2quad = get_quadrant(v2.direction)
+        v1quad = v1.direction.quadrant
+        v2quad = v2.direction.quadrant
         hem = None
 
         def get_east_west_cmp():
@@ -75,15 +75,15 @@ class ShotSegment(object):
         elif v1quad in Hemisphere.WEST and v2quad in Hemisphere.WEST:
             hem = Hemisphere.WEST
             cmp1, cmp2 = get_east_west_cmp()
-        elif (positive_radians(v1.direction - v2.direction) > pi / 2 ==
+        elif (v1.direction - v2.direction > pi / 2 ==
               v1quad in Hemisphere.WEST):
             cmp1 = cmp2 = 1
         else:
             cmp1 = cmp2 = -1
 
         def is_possible_collision(x, y):
-            in_correct_hemisphere = get_quadrant(
-                (Vector2D(x, y) - self.position).direction) in hem
+            in_correct_hemisphere = (
+                (Vector2D(x, y) - self.position).direction.quadrant in hem)
             return (cmp(y - p1.y, tan(v1.direction) * (x - p1.x)) == cmp1 and
                     cmp(y - p2.y, tan(v2.direction) * (x - p2.x)) == cmp2 and
                     (in_correct_hemisphere if hem is not None else True))
@@ -93,9 +93,9 @@ class ShotSegment(object):
             if is_possible_collision(*other_ball.position):
                 p1_to_ball = other_ball.position - p1
                 p2_to_ball = other_ball.position - p2
-                a1 = abs_radians(p1_to_ball.direction - v1.direction)
-                a2 = abs_radians(p2_to_ball.direction - v2.direction)
-                if min(a1, a2) > abs_radians(v1.direction - v2.direction):
+                a1 = abs(p1_to_ball.direction - v1.direction)
+                a2 = abs(p2_to_ball.direction - v2.direction)
+                if min(a1, a2) > abs(v1.direction - v2.direction):
                     raise ImpossibleShotError("Shot fully obstructed by balls.")
                 if a1 < a2:
                     v1.direction = p1_to_ball.direction
