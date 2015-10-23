@@ -86,10 +86,12 @@ def on_draw():
 def on_get_data(data):
     balls.update(data)
     shots.update(pockets, balls)
+
     best_shot = shots.best_shot
     best_shot.highlight()
+    port.send_data(best_shot.to_array())
+
     PrimitiveRenderer.update_all_vertex_lists()
-    return best_shot.to_array()
 
 
 @event_loop.event
