@@ -75,7 +75,7 @@ class PrimitiveRenderer(Renderer):
         PrimitiveRenderer._renderers.remove(self)
 
     def set_group(self, group):
-        batch.migrate(self._vertex_list, self.mode, group, batch)
+        batch.migrate(self._vertex_list, self.mode, Group(parent=group), batch)
 
     @abstractmethod
     def update_vertex_list(self):
@@ -580,7 +580,7 @@ class ShotSegmentRenderer(Renderer):
 
     def highlight(self):
         self._renderer.color = ShotSegmentRenderer.HIGHLIGHT_COLOR
-        # self._renderer.set_group(ShotSegmentRenderer._HIGHLIGHTED_GROUP)
+        self._renderer.set_group(ShotSegmentRenderer._HIGHLIGHTED_GROUP)
         # new_renderer = PolygonRenderer(
         #     ShotSegmentRenderer.HIGHLIGHT_COLOR,
         #     self._renderer.points,
