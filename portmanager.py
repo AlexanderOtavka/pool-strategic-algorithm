@@ -4,6 +4,7 @@ from __future__ import division, print_function
 
 from serial import Serial
 from xbee import XBee
+from pyglet.event import EventDispatcher
 
 __author__ = "Zander Otavka"
 
@@ -28,11 +29,14 @@ FAKE_DATA = [
 ]
 
 
-class PortManager(object):
+class PortManager(EventDispatcher):
+    """
+    :type _serial_port: Serial
+    :type _xbee: XBee
+    """
 
     _serial_port = None
     _xbee = None
-    _on_get_data = None
 
     def __init__(self, port):
         """
@@ -42,31 +46,31 @@ class PortManager(object):
         print("open port: {}".format(port))
         self._serial_port = Serial()
 
-    def _send_data(self, data):
+    def send_data(self, data):
         """
         :type data: tuple
         """
-        # TODO: implement PortManager._send_data
+        # TODO: implement PortManager.send_data
         print("send data: {} to xbee: {}".format(data, self._xbee))
 
-    def event(self, func):
-        """
-        :type func: (list[int]) -> tuple
-        """
-        if func.__name__ == "on_get_data":
-            def on_get_data(data):
-                # TODO: parse the data into an array
-                self._send_data(func(data))
-            self._on_get_data = on_get_data
-            return on_get_data
-
     def open(self):
-        assert self._on_get_data is not None
-
-        # self._xbee = XBee(self._serial_port, callback=self._on_get_data)
-        self._on_get_data(FAKE_DATA)
+        def on_get_data_callback(data):
+            # TODO: parse the data into an array
+            array = data
+            self.dispatch_event("on_get_data", array)
+        # self._xbee = XBee(self._serial_port, callback=on_get_data_callback)
+        on_get_data_callback(FAKE_DATA)
 
     def close(self):
         print("closing port {}".format(self._serial_port))
         self._xbee.halt()
         self._serial_port.close()
+
+    # noinspection PyMethodMayBeStatic
+    def on_get_data(self, data):
+        """
+        :type data: list[int]
+        """
+        pass
+
+PortManager.register_event_type("on_get_data")
