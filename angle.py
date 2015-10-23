@@ -27,6 +27,8 @@ class Angle(float):
         """
         :type radians: int or float or Angle
         """
+        if radians is None:
+            radians = 0.0
         if isinstance(radians, Angle):
             return radians
         radians %= 2 * pi
@@ -119,7 +121,7 @@ class Angle(float):
         return Angle(super(Angle, self).__rpow__(other))
 
     def __repr__(self):
-        return "Angle({})".format(self)
+        return "Angle({})".format(super(Angle, self).__repr__())
 
     def __str__(self):
-        return "{}pi".format(self / pi)
+        return "{}pi".format(float(self) / pi)

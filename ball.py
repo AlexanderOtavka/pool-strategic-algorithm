@@ -61,7 +61,7 @@ class BallGroup(list):
         """
         :type data: list[int]
         """
-        point_list = [Vector2D(data[i], data[i + 1])
+        point_list = [Vector2D(data[i:i + 2])
                       for i in range(0, len(data), 2)]
         if len(point_list) != self._size:
             self.delete()

@@ -16,7 +16,7 @@ class Vector2D(object):
 
     _components = None
 
-    def __init__(self, x=0, y=0):
+    def __init__(self, (x, y)=(0, 0)):
         """
         :type x: int or float
         :type y: int or float
@@ -27,7 +27,7 @@ class Vector2D(object):
     def from_polar(cls, magnitude, direction):
         x = cos(direction) * magnitude
         y = sin(direction) * magnitude
-        return cls(x, y)
+        return cls((x, y))
 
     @property
     def x(self):
@@ -72,7 +72,7 @@ class Vector2D(object):
         return +self
 
     def __add__(self, other):
-        return Vector2D(self.x + other.x, self.y + other.y)
+        return Vector2D((self.x + other.x, self.y + other.y))
 
     def __iadd__(self, other):
         self.x += other.x
@@ -80,7 +80,7 @@ class Vector2D(object):
         return self
 
     def __sub__(self, other):
-        return Vector2D(self.x - other.x, self.y - other.y)
+        return Vector2D((self.x - other.x, self.y - other.y))
 
     def __isub__(self, other):
         self.x -= other.x
@@ -88,7 +88,7 @@ class Vector2D(object):
         return self
 
     def __mul__(self, scalar):
-        return Vector2D(self.x * scalar, self.y * scalar)
+        return Vector2D((self.x * scalar, self.y * scalar))
 
     def __imul__(self, scalar):
         self.x *= scalar
@@ -96,10 +96,10 @@ class Vector2D(object):
         return self
 
     def __rmul__(self, scalar):
-        return Vector2D(scalar * self.x, scalar * self.y)
+        return Vector2D((scalar * self.x, scalar * self.y))
 
     def __truediv__(self, scalar):
-        return Vector2D(self.x / scalar, self.y / scalar)
+        return Vector2D((self.x / scalar, self.y / scalar))
 
     def __itruediv__(self, scalar):
         self.x /= scalar
@@ -107,7 +107,7 @@ class Vector2D(object):
         return self
 
     def __rtruediv__(self, scalar):
-        return Vector2D(scalar / self.x, scalar / self.y)
+        return Vector2D((scalar / self.x, scalar / self.y))
 
     def __eq__(self, other):
         return self.x == other.x and self.y == other.y
@@ -116,10 +116,10 @@ class Vector2D(object):
         return not self == other
 
     def __neg__(self):
-        return Vector2D(-self.x, -self.y)
+        return Vector2D((-self.x, -self.y))
 
     def __pos__(self):
-        return Vector2D(+self.x, +self.y)
+        return Vector2D((+self.x, +self.y))
 
     def __nonzero__(self):
         return self.x or self.y

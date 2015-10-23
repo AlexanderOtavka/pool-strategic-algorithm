@@ -12,6 +12,7 @@ from pyglet.text import Label
 
 from angle import Angle
 from vector2d import Vector2D
+from target import ShotTarget
 
 __author__ = "Zander Otavka"
 
@@ -61,9 +62,20 @@ class PrimitiveRenderer(Renderer):
     def color(self, new):
         self._color = new
 
+    @abstractproperty
+    def mode(self):
+        """
+        :rtype: int
+        """
+        pass
+
     def delete(self):
         self._vertex_list.delete()
         self._vertex_list = None
+        PrimitiveRenderer._renderers.remove(self)
+
+    def set_group(self, group):
+        batch.migrate(self._vertex_list, self.mode, group, batch)
 
     @abstractmethod
     def update_vertex_list(self):
@@ -227,7 +239,7 @@ class CircleArc(CirclePointGroup):
                      self.start_angle)
             x = cos(angle) * self.circle_renderer.radius
             y = sin(angle) * self.circle_renderer.radius
-            yield Vector2D(x, y) + self.circle_renderer.position
+            yield Vector2D((x, y)) + self.circle_renderer.position
 
 
 class CircleRenderer(PrimitiveRenderer):
@@ -343,8 +355,12 @@ class CircleRenderer(PrimitiveRenderer):
             count += point.point_count
         return count
 
+    @property
+    def mode(self):
+        return GL_TRIANGLE_FAN
+
     def _create_vertex_list(self):
-        self._vertex_list = batch.add(self.point_count, GL_TRIANGLE_FAN,
+        self._vertex_list = batch.add(self.point_count, self.mode,
                                       self._group, "v2f", "c3B")
 
     def update_vertex_list(self):
@@ -389,7 +405,7 @@ class BallRenderer(Renderer):
         (130,  90,  30),  # 15 - brown
     ]
 
-    _BALL_GROUP = OrderedGroup(2)
+    _BALL_GROUP = OrderedGroup(3)
     _CIRCLE_GROUP = OrderedGroup(0, _BALL_GROUP)
     _STRIPE_GROUP = OrderedGroup(1, _BALL_GROUP)
     _NUMBER_BG_GROUP = OrderedGroup(2, _BALL_GROUP)
@@ -510,8 +526,12 @@ class PocketRenderer(PrimitiveRenderer):
     def offset2(self, new):
         self._offset2 = new
 
+    @property
+    def mode(self):
+        return GL_QUADS
+
     def _create_vertex_list(self):
-        self._vertex_list = batch.add(4, GL_QUADS, self._group, "v2f", "c3B")
+        self._vertex_list = batch.add(4, self.mode, self._group, "v2f", "c3B")
 
     def update_vertex_list(self):
         offset_angle = (self.offset2 - self.offset1).direction
@@ -537,21 +557,60 @@ class PocketRenderer(PrimitiveRenderer):
 
 class ShotSegmentRenderer(Renderer):
 
-    _SHOT_GROUP = OrderedGroup(1)
+    HIGHLIGHT_COLOR = (50, 50, 50)
+
+    _SHOT_SEGMENT_GROUP = OrderedGroup(1)
+    _HIGHLIGHTED_GROUP = OrderedGroup(2)
 
     _renderer = None
 
-    def __init__(self, ball_number, position, vector1, vector2):
+    def __init__(self, ball_number, position, target, vector1, vector2):
         """
         :type ball_number: int
         :type position: Vector2D
+        :type target: ShotTarget
         :type vector1: Vector2D
         :type vector2: Vector2D
         """
         color = BallRenderer.COLORS[ball_number]
         self._renderer = PolygonRenderer(
-            color, (position + vector1, position, position + vector2),
-            GL_LINE_STRIP, ShotSegmentRenderer._SHOT_GROUP)
+            color, (position + vector1, target.point1,
+                    target.point2, position + vector2),
+            GL_LINE_LOOP, ShotSegmentRenderer._SHOT_SEGMENT_GROUP)
+
+    def highlight(self):
+        self._renderer.color = ShotSegmentRenderer.HIGHLIGHT_COLOR
+        # self._renderer.set_group(ShotSegmentRenderer._HIGHLIGHTED_GROUP)
+        # new_renderer = PolygonRenderer(
+        #     ShotSegmentRenderer.HIGHLIGHT_COLOR,
+        #     self._renderer.points,
+        #     GL_TRIANGLE_FAN,
+        #     ShotSegmentRenderer._SHOT_SEGMENT_GROUP
+        # )
+        # self._renderer.delete()
+        # self._renderer = new_renderer
+
+    def delete(self):
+        self._renderer.delete()
+
+
+class ShotRenderer(Renderer):
+
+    _SHOT_GROUP = OrderedGroup(3)
+
+    _renderer = None
+
+    def __init__(self, start_point, segments):
+        """
+        :type start_point: Vector2D
+        :type segments: list or tuple
+        """
+        points = [start_point]
+        for s in segments:
+            points.append(points[-1] + s.target.force)
+        self._renderer = PolygonRenderer((0, 0, 0), tuple(points),
+                                         GL_LINE_STRIP,
+                                         ShotRenderer._SHOT_GROUP)
 
     def delete(self):
         self._renderer.delete()

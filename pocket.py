@@ -4,6 +4,7 @@ from __future__ import division, print_function
 
 from render import PocketRenderer
 from target import ShotTarget
+from vector2d import Vector2D
 
 __author__ = "Zander Otavka"
 
@@ -67,9 +68,8 @@ class Pocket(object):
         """
         p1 = self.position + self.offset1
         p2 = self.position + self.offset2
-        f = -(self.offset1 + self.offset2) / 2
-        # noinspection PyTypeChecker
-        return ShotTarget(p1, p2, f, name=self.name)
+        offset_avg = Vector2D(self.offset1 + self.offset2) / 2
+        return ShotTarget(p1, p2, -offset_avg, name=self.name)
 
     def delete(self):
         self._renderer.delete()

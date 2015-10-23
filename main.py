@@ -42,34 +42,34 @@ shots = ShotGroup()
 CORNER_POCKET_OFFSET = sqrt(CORNER_POCKET_OPENING ** 2 / 2)
 SIDE_POCKET_DEPTH = sqrt(CORNER_POCKET_OFFSET ** 2 / 2)
 pockets = [
-    Pocket(Vector2D(0, 0),
-           Vector2D(0, CORNER_POCKET_OFFSET),
-           Vector2D(CORNER_POCKET_OFFSET, 0),
+    Pocket(Vector2D((0, 0)),
+           Vector2D((0, CORNER_POCKET_OFFSET)),
+           Vector2D((CORNER_POCKET_OFFSET, 0)),
            name="Bottom Left"),
 
-    Pocket(Vector2D(TABLE_WIDTH, 0),
-           Vector2D(-CORNER_POCKET_OFFSET, 0),
-           Vector2D(0, CORNER_POCKET_OFFSET),
+    Pocket(Vector2D((TABLE_WIDTH, 0)),
+           Vector2D((-CORNER_POCKET_OFFSET, 0)),
+           Vector2D((0, CORNER_POCKET_OFFSET)),
            name="Bottom Right"),
 
-    Pocket(Vector2D(TABLE_WIDTH, TABLE_HEIGHT),
-           Vector2D(-CORNER_POCKET_OFFSET, 0),
-           Vector2D(0, -CORNER_POCKET_OFFSET),
+    Pocket(Vector2D((TABLE_WIDTH, TABLE_HEIGHT)),
+           Vector2D((-CORNER_POCKET_OFFSET, 0)),
+           Vector2D((0, -CORNER_POCKET_OFFSET)),
            name="Top Right"),
 
-    Pocket(Vector2D(0, TABLE_HEIGHT),
-           Vector2D(0, -CORNER_POCKET_OFFSET),
-           Vector2D(CORNER_POCKET_OFFSET, 0),
+    Pocket(Vector2D((0, TABLE_HEIGHT)),
+           Vector2D((0, -CORNER_POCKET_OFFSET)),
+           Vector2D((CORNER_POCKET_OFFSET, 0)),
            name="Top Left"),
 
-    Pocket(Vector2D(TABLE_WIDTH / 2, -SIDE_POCKET_DEPTH),
-           Vector2D(-SIDE_POCKET_OPENING / 2, SIDE_POCKET_DEPTH),
-           Vector2D(SIDE_POCKET_OPENING / 2, SIDE_POCKET_DEPTH),
+    Pocket(Vector2D((TABLE_WIDTH / 2, -SIDE_POCKET_DEPTH)),
+           Vector2D((-SIDE_POCKET_OPENING / 2, SIDE_POCKET_DEPTH)),
+           Vector2D((SIDE_POCKET_OPENING / 2, SIDE_POCKET_DEPTH)),
            name="Bottom Center"),
 
-    Pocket(Vector2D(TABLE_WIDTH / 2, TABLE_HEIGHT + SIDE_POCKET_DEPTH),
-           Vector2D(-SIDE_POCKET_OPENING / 2, -SIDE_POCKET_DEPTH),
-           Vector2D(SIDE_POCKET_OPENING / 2, -SIDE_POCKET_DEPTH),
+    Pocket(Vector2D((TABLE_WIDTH / 2, TABLE_HEIGHT + SIDE_POCKET_DEPTH)),
+           Vector2D((-SIDE_POCKET_OPENING / 2, -SIDE_POCKET_DEPTH)),
+           Vector2D((SIDE_POCKET_OPENING / 2, -SIDE_POCKET_DEPTH)),
            name="Top Center"),
 ]
 
@@ -86,8 +86,10 @@ def on_draw():
 def on_get_data(data):
     balls.update(data)
     shots.update(pockets, balls)
+    best_shot = shots.best_shot
+    best_shot.highlight()
     PrimitiveRenderer.update_all_vertex_lists()
-    return shots.best_shot.to_array()
+    return best_shot.to_array()
 
 
 @event_loop.event
