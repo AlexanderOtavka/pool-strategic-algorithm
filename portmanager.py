@@ -9,31 +9,30 @@ from pyglet.event import EventDispatcher
 __author__ = "Zander Otavka"
 
 
-FAKE_DATA = [
-    200, 100,
-    400, 285,
-    600, 200,
-    800, 400,
-    # 230, 450,
-    # 120, 300,
-    # 110, 130,
-    # 345, 139,
-    # 824, 460,
-    # 000, 000,
-    # 400, 250,
-    # 600, 100,
-    # 800, 204,
-    # 230, 250,
-    # 120, 200,
-    # 110, 230,
-]
-
-
 class PortManager(EventDispatcher):
     """
     :type _serial_port: Serial
     :type _xbee: XBee
     """
+
+    FAKE_DATA = [
+        200, 100,
+        400, 285,
+        600, 200,
+        800, 400,
+        230, 450,
+        120, 300,
+        110, 130,
+        345, 139,
+        824, 460,
+        000, 000,
+        400, 250,
+        600, 100,
+        800, 204,
+        230, 250,
+        120, 200,
+        110, 230,
+    ]
 
     _serial_port = None
     _xbee = None
@@ -59,7 +58,7 @@ class PortManager(EventDispatcher):
             array = data
             self.dispatch_event("on_get_data", array)
         # self._xbee = XBee(self._serial_port, callback=on_get_data_callback)
-        on_get_data_callback(FAKE_DATA)
+        on_get_data_callback(PortManager.FAKE_DATA)
 
     def close(self):
         print("closing port {}".format(self._serial_port))

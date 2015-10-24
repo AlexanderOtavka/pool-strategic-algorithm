@@ -20,6 +20,7 @@ from shot import ShotGroup
 from render import PrimitiveRenderer, batch
 from pocket import Pocket
 from vector2d import Vector2D
+from rng import get_ball_positions
 
 __author__ = "Zander Otavka"
 
@@ -74,6 +75,9 @@ pockets = [
 ]
 
 glClearColor(0.2, 0.6, 0.3, 1)
+
+# generate fake, randomized data
+PortManager.FAKE_DATA = get_ball_positions(16, TABLE_WIDTH, TABLE_HEIGHT, pockets)
 
 
 @window.event
