@@ -82,10 +82,12 @@ class ShotSegment(object):
 
         def is_possible_collision(x, y):
             in_correct_hemisphere = (
-                (Vector2D((x, y)) - self.position).direction.quadrant in hem)
+                ((Vector2D((x, y)) - self.position).direction.quadrant in hem)
+                if hem is not None else True
+            )
             return (cmp(y - p1.y, tan(v1.direction) * (x - p1.x)) == cmp1 and
                     cmp(y - p2.y, tan(v2.direction) * (x - p2.x)) == cmp2 and
-                    (in_correct_hemisphere if hem is not None else True))
+                    in_correct_hemisphere)
 
         # restrict shot angles based on obstacles
         for other_ball in balls:
