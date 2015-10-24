@@ -7,7 +7,7 @@ from math import pi, tan, cos
 from vector2d import Vector2D
 from angle import Hemisphere
 from ball import Ball, BallGroup
-from render import ShotSegmentRenderer, ShotRenderer
+from render import ShotSegmentRenderer
 from target import ShotTarget
 from pocket import Pocket
 

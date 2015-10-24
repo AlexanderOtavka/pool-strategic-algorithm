@@ -7,7 +7,7 @@ from math import pi, sin, cos, ceil, copysign
 
 from pyglet.graphics import Batch, Group, OrderedGroup
 from pyglet.graphics.vertexdomain import VertexList
-from pyglet.gl import GL_LINE_LOOP, GL_LINE_STRIP, GL_TRIANGLE_FAN, GL_QUADS
+from pyglet.gl import GL_LINE_LOOP, GL_TRIANGLE_FAN, GL_QUADS
 from pyglet.text import Label
 
 from angle import Angle
@@ -589,28 +589,6 @@ class ShotSegmentRenderer(Renderer):
         # )
         # self._renderer.delete()
         # self._renderer = new_renderer
-
-    def delete(self):
-        self._renderer.delete()
-
-
-class ShotRenderer(Renderer):
-
-    _SHOT_GROUP = OrderedGroup(3)
-
-    _renderer = None
-
-    def __init__(self, start_point, segments):
-        """
-        :type start_point: Vector2D
-        :type segments: list or tuple
-        """
-        points = [start_point]
-        for s in segments:
-            points.append(points[-1] + s.target.force)
-        self._renderer = PolygonRenderer((0, 0, 0), tuple(points),
-                                         GL_LINE_STRIP,
-                                         ShotRenderer._SHOT_GROUP)
 
     def delete(self):
         self._renderer.delete()
